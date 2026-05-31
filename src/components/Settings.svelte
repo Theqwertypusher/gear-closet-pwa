@@ -407,7 +407,6 @@
       onclick={openClearModal}
       class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
     >
-      <Trash2 size={16} />
       Clear All Data
     </button>
     <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Permanently deletes all gear, kits, and packing lists.</p>
