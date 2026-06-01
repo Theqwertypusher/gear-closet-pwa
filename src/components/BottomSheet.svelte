@@ -17,7 +17,7 @@
   <Drawer.Portal>
     <Drawer.Overlay class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
     <Drawer.Content
-      class="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl max-h-[92vh] focus:outline-none"
+      class="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-white dark:bg-zinc-900 rounded-t-2xl shadow-xl max-h-[92vh] focus:outline-none drawer-content"
     >
       <!-- Drag handle -->
       <div class="flex justify-center pt-3 pb-1 flex-shrink-0">
