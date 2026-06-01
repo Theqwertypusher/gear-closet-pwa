@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { scale, slide } from 'svelte/transition'
-  import { Download, Upload, Trash2, Info, FlaskConical, Sun, Moon, Keyboard, Link, Check, ChevronDown, ChevronUp } from '@lucide/svelte'
+  import { Download, Upload, Trash2, Info, FlaskConical, Sun, Moon, Keyboard, Link, Check, ChevronDown, ChevronUp, WifiOff } from '@lucide/svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { gearStore, setGearStoreTutorialMode } from '../lib/stores/gearStore.svelte'
   import { kitStore, setKitStoreTutorialMode } from '../lib/stores/kitStore.svelte'
@@ -20,11 +20,23 @@
   let shortcutsOpen = $state(
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : false
   )
+  let offlineOpen = $state(false)
   let tutorialOffStatus = $state(false)
   let keepSavedStatus = $state(false)
   let fileInput: HTMLInputElement
   let showClearModal = $state(false)
   let clearConfirmText = $state('')
+  let appVersion = $state('v1.0.0')
+
+  $effect(() => {
+    const owner = import.meta.env.VITE_GITHUB_OWNER
+    const repo = import.meta.env.VITE_GITHUB_REPO
+    if (!owner || !repo) return
+    fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`)
+      .then(r => r.json())
+      .then(d => { if (d.tag_name) appVersion = d.tag_name })
+      .catch(() => {})
+  })
 
 
   async function handleTutorialToggleOn() {
@@ -59,14 +71,14 @@
       $state.snapshot(gearStore.items),
       $state.snapshot(kitStore.kits),
       $state.snapshot(packingListStore.lists),
-      { ...$state.snapshot(settingsStore.settings), tutorialMode: false },
+      { ...$state.snapshot(settingsStore.settings), tutorialMode: false, demoModeLocked: true },
     )
     // Disable tutorial mode flags so store resets load from real DB data
     setGearStoreTutorialMode(false)
     setKitStoreTutorialMode(false)
     setPackingListStoreTutorialMode(false)
     // Update in-memory settings immediately (no reset flash)
-    await settingsStore.update({ tutorialMode: false })
+    await settingsStore.update({ tutorialMode: false, demoModeLocked: true })
     // Reload data stores from IndexedDB
     await Promise.all([
       gearStore.reset(),
@@ -170,23 +182,34 @@
     <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
 
     <div class="space-y-0.5">
-      <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Gear Closet</p>
-      <p class="text-xs text-zinc-500 dark:text-zinc-400">Version 1.0.0</p>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">{appVersion}</p>
       <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Your gear. Your trips. Always ready.</p>
     </div>
     <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
-      This is an open source project meant to serve the community. Your data is neither tracked nor saved. You own it all on your device(s). Any feedback and / or issues can be reported below. Happy trailblazing.
+      This is an open source project meant to serve the community. App data is not stored in a third-party database — it lives on your device. You own it. Any feedback and / or issues can be reported below. Happy trailblazing.
     </p>
-    {#if import.meta.env.VITE_FEEDBACK_URL}
-      <a
-        href={import.meta.env.VITE_FEEDBACK_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-block mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-      >
-        Feedback form
-      </a>
-    {/if}
+    <div class="flex flex-col gap-1.5 mt-3">
+      {#if import.meta.env.VITE_FEEDBACK_URL}
+        <a
+          href={import.meta.env.VITE_FEEDBACK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="self-start text-xs font-medium text-zinc-500 dark:text-zinc-400 underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+        >
+          Feedback form
+        </a>
+      {/if}
+      {#if import.meta.env.VITE_GITHUB_URL}
+        <a
+          href="{import.meta.env.VITE_GITHUB_URL}/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="self-start text-xs font-medium text-zinc-500 dark:text-zinc-400 underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+        >
+          Report issues form
+        </a>
+      {/if}
+    </div>
   </section>
 
   <!-- Appearance -->
@@ -213,72 +236,18 @@
         role="switch"
         aria-checked={settingsStore.settings.theme === 'dark'}
       >
-        <span class="absolute left-1 transition-all {settingsStore.settings.theme === 'dark' ? 'opacity-0' : 'opacity-100'}">
-          <Sun size={10} class="text-amber-500" />
-        </span>
         <span
-          class="inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 transition-transform shadow
+          class="inline-flex items-center justify-center h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 transition-transform shadow
             {settingsStore.settings.theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}"
-        ></span>
-        <span class="absolute right-1 transition-all {settingsStore.settings.theme === 'dark' ? 'opacity-100' : 'opacity-0'}">
-          <Moon size={10} class="text-zinc-400 dark:text-zinc-300" />
+        >
+          {#if settingsStore.settings.theme === 'dark'}
+            <Moon size={10} class="text-zinc-400 dark:text-zinc-300" />
+          {:else}
+            <Sun size={10} class="text-amber-500" />
+          {/if}
         </span>
       </button>
     </div>
-  </section>
-
-  <!-- Keyboard Shortcuts -->
-  <section>
-    <button
-      onclick={() => (shortcutsOpen = !shortcutsOpen)}
-      class="w-full flex items-center justify-between gap-2 mb-1 group"
-    >
-      <div class="flex items-center gap-2">
-        <Keyboard size={14} class="text-zinc-400" />
-        <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-          Keyboard Shortcuts
-        </h2>
-      </div>
-      {#if shortcutsOpen}
-        <ChevronUp size={14} class="text-zinc-400 dark:text-zinc-500" />
-      {:else}
-        <ChevronDown size={14} class="text-zinc-400 dark:text-zinc-500" />
-      {/if}
-    </button>
-    <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
-
-    {#if shortcutsOpen}
-    <div class="space-y-1" transition:slide={{ duration: 200 }}>
-      {#each [
-        { keys: ['1'], desc: 'Go to Packing Lists' },
-        { keys: ['2'], desc: 'Go to Kits' },
-        { keys: ['3'], desc: 'Go to Gear Closet' },
-        { keys: ['4'], desc: 'Go to Settings' },
-        { keys: ['U'], desc: 'Cycle weight unit (g → oz → lbs → kg)' },
-        { keys: ['T'], desc: 'Toggle demo mode on / off' },
-        { keys: ['A'], desc: 'Add new item / list / kit / category' },
-        { keys: ['A', 'I'], desc: 'Cycle Add item buttons in packing list (hold A, tap I)' },
-        { keys: ['A', 'K'], desc: 'Cycle Add kit buttons in packing list (hold A, tap K)' },
-        { keys: ['C', '⌫'], desc: 'Cycle category delete in packing list (hold C, tap ⌫)' },
-        { keys: ['I', '⌫'], desc: 'Cycle item delete in packing list (hold I, tap ⌫)' },
-        { keys: ['Esc'], desc: 'Close modal or dismiss' },
-        { keys: ['⌫'], desc: 'Go back' },
-      ] as shortcut}
-        <div class="flex items-center justify-between py-1.5">
-          <span class="text-sm text-zinc-600 dark:text-zinc-400">{shortcut.desc}</span>
-          <div class="flex items-center gap-1">
-            {#each shortcut.keys as key}
-              <kbd class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold
-                bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
-                border border-zinc-300 dark:border-zinc-600 shadow-sm">
-                {key}
-              </kbd>
-            {/each}
-          </div>
-        </div>
-      {/each}
-    </div>
-    {/if}
   </section>
 
   <!-- Demo Mode -->
@@ -296,20 +265,20 @@
 
     {#if settingsStore.settings.tutorialMode}
       <div class="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 px-4 py-3">
-        <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Currently active</p>
-        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Exploring with sample data</p>
+        <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Demo mode active</p>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">You're exploring with sample data</p>
         <div class="flex gap-3 mt-3">
           <button
             onclick={handleKeepSampleData}
             class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
           >
-            Save sample data
+            Keep this data
           </button>
           <button
             onclick={handleTutorialToggleOff}
             class="text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            Discard &amp; exit
+            Start fresh
           </button>
         </div>
       </div>
@@ -317,14 +286,18 @@
       <div class="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-4 py-3">
         <div>
           <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">Using your own data</p>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Enable to explore with sample data</p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            {settingsStore.settings.demoModeLocked ? 'Demo mode is permanently disabled' : 'Enable to explore with sample data'}
+          </p>
         </div>
-        <button
-          onclick={handleTutorialToggleOn}
-          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          Enable
-        </button>
+        {#if !settingsStore.settings.demoModeLocked}
+          <button
+            onclick={handleTutorialToggleOn}
+            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            Enable
+          </button>
+        {/if}
       </div>
     {/if}
     {#if keepSavedStatus}
@@ -362,7 +335,7 @@
         </button>
         <button
           onclick={handleExport}
-          class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
         >
           <Download size={16} />
           Export Backup
@@ -379,18 +352,150 @@
         </p>
       {/if}
       <input bind:this={fileInput} type="file" accept=".json" class="sr-only" onchange={handleFileChange} />
+    </div>
+  </section>
 
-      <!-- Share link -->
+  <!-- Share with others -->
+  <section>
+    <div class="flex items-center gap-2 mb-1">
+      <Link size={14} class="text-zinc-400" />
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+        Share with others
+      </h2>
+    </div>
+    <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
+
+    <button
+      onclick={() => (showShareModal = true)}
+      class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+    >
+      <Link size={16} />
+      Create a link
+    </button>
+    <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Generate a shareable link so others can view your gear, kits, and packing lists — read only, no account needed.</p>
+  </section>
+
+  <!-- How to Use Offline -->
+  <section>
+    <button
+      onclick={() => (offlineOpen = !offlineOpen)}
+      class="w-full flex items-center justify-between gap-2 mb-1 group"
+    >
+      <div class="flex items-center gap-2">
+        <WifiOff size={14} class="text-zinc-400" />
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+          How to Use Offline
+        </h2>
+      </div>
+      {#if offlineOpen}
+        <ChevronUp size={14} class="text-zinc-400 dark:text-zinc-500" />
+      {:else}
+        <ChevronDown size={14} class="text-zinc-400 dark:text-zinc-500" />
+      {/if}
+    </button>
+    <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
+
+    {#if offlineOpen}
+    <div class="space-y-4" transition:slide={{ duration: 200 }}>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+        Install Gear Closet to your home screen to use it offline — no app store required. Your data stays on your device.
+      </p>
       <div>
-        <button
-          onclick={() => (showShareModal = true)}
-          class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <Link size={16} />
-          Share a link
-        </button>
+        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">iOS (Safari)</p>
+        <ol class="text-xs text-zinc-500 dark:text-zinc-400 space-y-1 list-decimal list-inside leading-relaxed">
+          <li>Tap the <span class="font-medium text-zinc-600 dark:text-zinc-300">Share</span> button at the bottom of Safari</li>
+          <li>Scroll down and tap <span class="font-medium text-zinc-600 dark:text-zinc-300">Add to Home Screen</span></li>
+          <li>Tap <span class="font-medium text-zinc-600 dark:text-zinc-300">Add</span> to confirm</li>
+        </ol>
+      </div>
+      <div>
+        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Android (Chrome)</p>
+        <ol class="text-xs text-zinc-500 dark:text-zinc-400 space-y-1 list-decimal list-inside leading-relaxed">
+          <li>Tap the <span class="font-medium text-zinc-600 dark:text-zinc-300">⋮</span> menu in the top-right corner</li>
+          <li>Tap <span class="font-medium text-zinc-600 dark:text-zinc-300">Add to Home Screen</span> or <span class="font-medium text-zinc-600 dark:text-zinc-300">Install app</span></li>
+          <li>Tap <span class="font-medium text-zinc-600 dark:text-zinc-300">Install</span> to confirm</li>
+        </ol>
       </div>
     </div>
+    {/if}
+  </section>
+
+  <!-- Keyboard Shortcuts -->
+  <section>
+    <button
+      onclick={() => (shortcutsOpen = !shortcutsOpen)}
+      class="w-full flex items-center justify-between gap-2 mb-1 group"
+    >
+      <div class="flex items-center gap-2">
+        <Keyboard size={14} class="text-zinc-400" />
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+          Keyboard Shortcuts
+        </h2>
+      </div>
+      {#if shortcutsOpen}
+        <ChevronUp size={14} class="text-zinc-400 dark:text-zinc-500" />
+      {:else}
+        <ChevronDown size={14} class="text-zinc-400 dark:text-zinc-500" />
+      {/if}
+    </button>
+    <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
+
+    {#if shortcutsOpen}
+    <div class="space-y-1" transition:slide={{ duration: 200 }}>
+      {#each [
+        { keys: ['1'], desc: 'Go to Packing Lists' },
+        { keys: ['2'], desc: 'Go to Kits' },
+        { keys: ['3'], desc: 'Go to Gear Closet' },
+        { keys: ['4'], desc: 'Go to Settings' },
+        { keys: ['Esc'], desc: 'Close modal or dismiss' },
+        { keys: ['⌫'], desc: 'Go back' },
+        { keys: ['T'], desc: 'Toggle demo mode on / off' },
+        { keys: ['A'], desc: 'Add new item / list / kit / category' },
+        { keys: ['U'], desc: 'Cycle weight unit (g → oz → lbs → kg)' },
+        { keys: ['A', 'I'], desc: 'Cycle Add item buttons in packing list (hold A, tap I)' },
+        { keys: ['A', 'K'], desc: 'Cycle Add kit buttons in packing list (hold A, tap K)' },
+        { keys: ['C', '⌫'], desc: 'Cycle category delete in packing list (hold C, tap ⌫)' },
+        { keys: ['I', '⌫'], desc: 'Cycle item delete in packing list (hold I, tap ⌫)' },
+      ] as shortcut}
+        <div class="flex items-center justify-between py-1.5">
+          <span class="text-sm text-zinc-600 dark:text-zinc-400">{shortcut.desc}</span>
+          <div class="flex items-center gap-1">
+            {#each shortcut.keys as key}
+              <kbd class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold
+                bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                border border-zinc-300 dark:border-zinc-600 shadow-sm">
+                {key}
+              </kbd>
+            {/each}
+          </div>
+        </div>
+      {/each}
+
+      <!-- Packing list open -->
+      <div class="pt-3 pb-1">
+        <p class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">When packing list open</p>
+        <div class="border-t border-zinc-200 dark:border-zinc-800 mt-1"></div>
+      </div>
+      {#each [
+        { keys: ['D'], desc: 'Switch to Draft mode' },
+        { keys: ['F'], desc: 'Switch to Final mode' },
+        { keys: ['P'], desc: 'Switch to Packing mode' },
+      ] as shortcut}
+        <div class="flex items-center justify-between py-1.5">
+          <span class="text-sm text-zinc-600 dark:text-zinc-400">{shortcut.desc}</span>
+          <div class="flex items-center gap-1">
+            {#each shortcut.keys as key}
+              <kbd class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold
+                bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                border border-zinc-300 dark:border-zinc-600 shadow-sm">
+                {key}
+              </kbd>
+            {/each}
+          </div>
+        </div>
+      {/each}
+    </div>
+    {/if}
   </section>
 
   <!-- Danger Zone -->

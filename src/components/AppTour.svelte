@@ -26,7 +26,7 @@
       icon: '📲',
       title: 'Install for offline use',
       parts: [
-        { align: 'center', text: 'Gear Closet is a Progressive Web App (PWA) — a website you can install directly to your phone\'s home screen. Once installed, it works fully offline, so you can check your packing list in the backcountry without a signal.' },
+        { align: 'center', text: 'Gear Closet is a Progressive Web App (PWA) — a website you can install on your phone, tablet, or desktop. Once installed, it works fully offline, so you can check your packing list in the backcountry without a signal.' },
         { align: 'center', text: 'To install on iOS: Tap Share → Add to Home Screen.\nTo install on Android: Tap the browser menu → Add to Home Screen or Install.' },
       ],
     },
@@ -42,7 +42,7 @@
       title: 'Weight categories',
       parts: [
         { align: 'center', text: 'Every item belongs to one of three categories:' },
-        { align: 'left', html: true, text: '<strong><u>Base Weight</u></strong> — gear you always carry.\n(Shelter, sleep system, pack)\n\n<strong><u>Wearable</u></strong> — what\'s on your body.\n(Boots, jacket, hat)\n\n<strong><u>Consumable</u></strong> — things you use up.\n(Food, fuel, water)' },
+        { align: 'left', html: true, text: '<strong><u>Base Weight</u></strong> — gear you always carry (shelter, sleep system, pack).\n\n<strong><u>Wearable</u></strong> — what\'s on your body (boots, jacket, hat).\n\n<strong><u>Consumable</u></strong> — things you use up (food, fuel, water).' },
         { align: 'center', text: 'These power the weight breakdown on every packing list.' },
       ],
     },

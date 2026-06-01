@@ -93,6 +93,13 @@
     await gearStore.deleteItem(id)
   }
 
+  $effect(() => {
+    if (!showLabelsModal) return
+    function handler() { showLabelsModal = false }
+    window.addEventListener('shortcut:escape', handler)
+    return () => window.removeEventListener('shortcut:escape', handler)
+  })
+
   function openLabelsModal() {
     const drafts: Record<string, string> = {}
     for (const tag of gearStore.itemTypes) drafts[tag] = tag
@@ -153,8 +160,8 @@
                 : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
           >
             {tab.label}
-            {#if tab.id === 'all'}
-              <span class="ml-1 text-xs opacity-60">({gearStore.items.length})</span>
+            {#if activeFilter === tab.id}
+              <span class="ml-1 text-xs opacity-60">({gearStore.filteredItems(tab.id).length})</span>
             {/if}
           </button>
         {/each}
@@ -196,34 +203,36 @@
 
     <!-- Tag filter pills -->
     {#if availableTags.length > 0 || hasUnlabeledItems}
-      <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none px-4 pb-4">
-        {#each availableTags as tag}
-          <button
-            onclick={() => (activeTag = activeTag === tag ? null : tag)}
-            class="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors
-              {activeTag === tag
-                ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-          >
-            {tag}
-          </button>
-        {/each}
-        <!-- No label pill — outline only, always last, only when unlabeled items exist -->
-        {#if hasUnlabeledItems}
-          <button
-            onclick={() => (activeTag = activeTag === '__no_label__' ? null : '__no_label__')}
-            class="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border
-              {activeTag === '__no_label__'
-                ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
-                : 'border-zinc-400 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-zinc-600 dark:hover:border-zinc-400 bg-transparent'}"
-          >
-            No label
-          </button>
-        {/if}
-        <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 shrink-0 ml-auto"></div>
+      <div class="flex items-center gap-1.5 pb-4">
+        <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none pl-4 flex-1 min-w-0">
+          <!-- No label pill — always first -->
+          {#if hasUnlabeledItems}
+            <button
+              onclick={() => (activeTag = activeTag === '__no_label__' ? null : '__no_label__')}
+              class="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border
+                {activeTag === '__no_label__'
+                  ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
+                  : 'border-zinc-400 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:border-zinc-600 dark:hover:border-zinc-400 bg-transparent'}"
+            >
+              No label
+            </button>
+          {/if}
+          {#each availableTags as tag}
+            <button
+              onclick={() => (activeTag = activeTag === tag ? null : tag)}
+              class="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                {activeTag === tag
+                  ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+            >
+              {tag}
+            </button>
+          {/each}
+        </div>
+        <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 shrink-0"></div>
         <button
           onclick={openLabelsModal}
-          class="shrink-0 p-1.5 rounded-full text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          class="shrink-0 p-1.5 pr-4 rounded-full text-zinc-600 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           aria-label="Manage labels"
         >
           <Tag size={13} />
@@ -256,8 +265,8 @@
           <GearItemRow {item} weightUnit={settingsStore.settings.weightUnit} onEdit={openEdit} onDelete={handleDelete} />
         {/each}
       </ul>
-      <!-- Spacer for FAB -->
-      <div class="h-20"></div>
+      <!-- Spacer for FAB + nav + safe area -->
+      <div class="h-32" style="padding-bottom: env(safe-area-inset-bottom)"></div>
     {/if}
   </div>
 

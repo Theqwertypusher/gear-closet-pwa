@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   tutorialMode: false,
   hasSeenWelcome: false,
   theme: 'dark',
+  demoModeLocked: false,
 }
 
 function createSettingsStore() {

@@ -204,6 +204,7 @@
     }
 
     if (k === 't' || k === 'T') {
+      if (settingsStore.settings.demoModeLocked) return
       if (settingsStore.settings.tutorialMode) {
         setGearStoreTutorialMode(false)
         setKitStoreTutorialMode(false)
@@ -269,6 +270,21 @@
     return () => window.removeEventListener('navigate:tab', onNavigateTab)
   })
 
+  $effect(() => {
+    const tabNames: Record<Tab, string> = {
+      'gear': 'Gear Closet',
+      'kits': 'Kits',
+      'packing-lists': 'Packing Lists',
+      'settings': 'Settings',
+    }
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'page_view', {
+        page_title: tabNames[activeTab],
+        page_location: `${window.location.origin}/${activeTab}`,
+      })
+    }
+  })
+
   function onWelcomeDone() {
     // If tutorial mode was just enabled show a toast
     if (settingsStore.settings.tutorialMode) {
@@ -306,10 +322,11 @@
 {:else}
   <div class="flex flex-col min-h-svh bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
     <!-- Header -->
-    <header class="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
+    <header class="sticky top-0 z-30 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
       <h1 class="text-xl font-semibold tracking-tight">
         Gear Closet
       </h1>
+      {#if activeTab !== 'settings'}
       <button
         onclick={() => {
           const units: import('./lib/types').WeightUnit[] = ['g', 'oz', 'lbs', 'kg']
@@ -323,6 +340,7 @@
       >
         {settingsStore.settings.weightUnit}
       </button>
+      {/if}
     </header>
 
     <!-- Demo mode banner -->
@@ -385,13 +403,13 @@
     </main>
 
     <!-- Bottom nav -->
-    <nav class="sticky bottom-0 z-10 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
-      <ul class="flex">
+    <nav class="sticky bottom-0 z-30 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800" style="padding-bottom: env(safe-area-inset-bottom);">
+      <ul class="flex" style="padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);">
         {#each tabs as tab}
           <li class="flex-1">
             <button
               onclick={() => (activeTab = tab.id)}
-              class="flex flex-col items-center gap-1 py-3 w-full text-xs font-medium transition-colors
+              class="flex flex-col items-center gap-1 py-3 px-2 w-full text-xs font-medium transition-colors
                 {activeTab === tab.id
                   ? 'text-zinc-900 dark:text-zinc-100'
                   : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}"
