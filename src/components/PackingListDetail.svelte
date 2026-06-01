@@ -424,9 +424,10 @@
   function saveTripNotes() { save() }
 </script>
 
-<div class="flex flex-col min-h-svh bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+<div class="fixed inset-0 z-40 flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
   <!-- Header -->
   <header class="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+    <!-- Row 1: back + title + pills (pills inline on sm+, hidden on mobile) -->
     <div class="flex items-center gap-3">
       <button onclick={onback} class="p-1 -ml-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors" aria-label="Back">
         <ArrowLeft size={22} />
@@ -450,29 +451,22 @@
         </button>
       {/if}
 
-      <!-- Mode pills -->
-      <div class="flex items-center gap-1.5 flex-shrink-0">
-        <!-- Draft -->
+      <!-- Mode pills — inline on sm+ only -->
+      <div class="hidden sm:flex items-center gap-1.5 flex-shrink-0">
         <button
           onclick={() => setListMode('draft')}
           class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
             {(localList.listMode ?? 'draft') === 'draft'
               ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-        >
-          Draft
-        </button>
-        <!-- Final -->
+        >Draft</button>
         <button
           onclick={() => setListMode('final')}
           class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
             {(localList.listMode ?? 'draft') === 'final'
               ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-        >
-          Final
-        </button>
-        <!-- Start Packing (only in Final mode) -->
+        >Final</button>
         {#if (localList.listMode ?? 'draft') === 'final'}
           <button
             onclick={togglePackingMode}
@@ -487,24 +481,63 @@
         {/if}
       </div>
     </div>
+
+    <!-- Row 2: mode pills — mobile only -->
+    <div class="flex sm:hidden items-center gap-1.5 mt-2">
+      <button
+        onclick={() => setListMode('draft')}
+        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+          {(localList.listMode ?? 'draft') === 'draft'
+            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >Draft</button>
+      <button
+        onclick={() => setListMode('final')}
+        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+          {(localList.listMode ?? 'draft') === 'final'
+            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >Final</button>
+      {#if (localList.listMode ?? 'draft') === 'final'}
+        <button
+          onclick={togglePackingMode}
+          class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+            {localList.isPackingMode
+              ? 'bg-green-700 dark:bg-green-800 text-white shadow-sm shadow-green-900/20'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+        >
+          <Check size={12} />
+          {localList.isPackingMode ? 'Packing' : 'Start Packing'}
+        </button>
+      {/if}
+    </div>
   </header>
 
   <!-- Weight summary bar (sticky below header) -->
-  <div class="sticky top-[57px] z-10 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-    <div class="grid grid-cols-4 gap-2">
-      {#each [
-        { label: 'Base',       value: weights.base },
-        { label: 'Wearable',   value: weights.wearable },
-        { label: 'Consumable', value: weights.consumable },
-        { label: 'Total',      value: weights.total, bold: true },
-      ] as stat}
-        <div class="flex flex-col items-center {stat.bold ? 'border-l border-zinc-200 dark:border-zinc-700 pl-2' : ''}">
-          <span class="text-[10px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500">{stat.label}</span>
-          <span class="text-sm {stat.bold ? 'font-bold text-zinc-900 dark:text-zinc-100' : 'font-medium text-zinc-700 dark:text-zinc-300'} tabular-nums">
-            {formatWeight(stat.value, unit)}
-          </span>
-        </div>
-      {/each}
+  <div class="sticky top-[93px] sm:top-[57px] z-10 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+    <div class="flex items-center">
+      <!-- Base / Wearable / Consumable — evenly spaced by content -->
+      <div class="flex flex-1 justify-evenly">
+        {#each [
+          { label: 'Base',       value: weights.base },
+          { label: 'Wearable',   value: weights.wearable },
+          { label: 'Consumable', value: weights.consumable },
+        ] as stat}
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">{stat.label}</span>
+            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300 tabular-nums">
+              {formatWeight(stat.value, unit)}
+            </span>
+          </div>
+        {/each}
+      </div>
+      <!-- Total — separated by divider -->
+      <div class="flex flex-col items-center border-l border-zinc-200 dark:border-zinc-700 pl-4 ml-4">
+        <span class="text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Total</span>
+        <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          {formatWeight(weights.total, unit)}
+        </span>
+      </div>
     </div>
   </div>
 
@@ -541,11 +574,11 @@
       {#each localList.categories as cat}
         {@const catWeight = categoryWeight(cat)}
         <!-- Category header row -->
+        {@const catTotalQty = cat.items.reduce((s, i) => s + i.quantity, 0)}
         <div class="flex items-baseline justify-between pt-5 pb-1.5 border-b border-zinc-300 dark:border-zinc-600">
           <span class="text-sm font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">{cat.name}</span>
           <div class="flex items-baseline gap-3 text-xs text-zinc-400 dark:text-zinc-500">
-            <span class="tabular-nums">{formatWeight(catWeight, unit)}</span>
-            <span>{cat.items.length} item{cat.items.length !== 1 ? 's' : ''}</span>
+            <span>{catTotalQty} item{catTotalQty !== 1 ? 's' : ''}</span>
           </div>
         </div>
 
@@ -558,6 +591,23 @@
                 {item.checked && localList.isPackingMode ? 'opacity-40' : ''}"
             >
               {#if localList.isPackingMode}
+                <!-- Quantity label on the left in packing mode -->
+                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums flex-shrink-0 w-7 text-center">
+                  {item.quantity}x
+                </span>
+              {/if}
+              <span class="flex-1 text-sm text-zinc-800 dark:text-zinc-200 truncate
+                {item.checked && localList.isPackingMode ? 'line-through' : ''}">
+                {gear.name}{#if gear.brand} <span class="text-zinc-400 dark:text-zinc-500 font-normal text-xs">· {gear.brand}</span>{/if}
+              </span>
+              {#if !localList.isPackingMode}
+                <span class="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums flex-shrink-0">
+                  {formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}
+                  {#if item.quantity > 1}<span class="ml-0.5 text-zinc-300 dark:text-zinc-600">×{item.quantity}</span>{/if}
+                </span>
+              {/if}
+              {#if localList.isPackingMode}
+                <!-- Checkbox on the right in packing mode -->
                 <button
                   onclick={() => toggleChecked(cat.id, item.id)}
                   class="w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors
@@ -569,18 +619,6 @@
                   {/if}
                 </button>
               {/if}
-              <span class="flex-1 text-sm text-zinc-800 dark:text-zinc-200 truncate
-                {item.checked && localList.isPackingMode ? 'line-through' : ''}">
-                {gear.name}{#if gear.brand} <span class="text-zinc-400 dark:text-zinc-500 font-normal text-xs">· {gear.brand}</span>{/if}
-              </span>
-              <span class="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums flex-shrink-0">
-                {#if localList.isPackingMode}
-                  qty {item.quantity}
-                {:else}
-                  {formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}
-                  {#if item.quantity > 1}<span class="ml-0.5 text-zinc-300 dark:text-zinc-600">×{item.quantity}</span>{/if}
-                {/if}
-              </span>
             </div>
           {/if}
         {/each}
@@ -591,32 +629,39 @@
     <!-- DRAFT VIEW — original bordered card layout                 -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <div class="px-4 pt-4 space-y-4">
-      <!-- Add category button -->
-      <button
-        onclick={addCategory}
-        class="w-full py-3 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700
-          text-sm font-medium text-zinc-400 dark:text-zinc-500
-          hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300
-          transition-colors flex items-center justify-center gap-2"
-      >
-        <Plus size={16} />
-        Add Category
-      </button>
+      <!-- Trip notes + Add category inline -->
+      <div class="flex gap-3">
+        <!-- Trip Notes — 1/3 width -->
+        <div class="flex-[1] rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <button
+            onclick={() => (showTripNotes = !showTripNotes)}
+            class="flex items-center justify-between w-full px-3 py-3 bg-zinc-50 dark:bg-zinc-900 text-sm font-semibold h-full"
+          >
+            <span>Notes</span>
+            {#if showTripNotes}
+              <ChevronUp size={18} class="text-zinc-400" />
+            {:else}
+              <ChevronDown size={18} class="text-zinc-400" />
+            {/if}
+          </button>
+        </div>
 
-      <!-- Trip notes -->
-      <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <!-- Add Category — 2/3 width -->
         <button
-          onclick={() => (showTripNotes = !showTripNotes)}
-          class="flex items-center justify-between w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 text-sm font-semibold"
+          onclick={addCategory}
+          class="flex-[2] py-3 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700
+            text-sm font-medium text-zinc-400 dark:text-zinc-500
+            hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300
+            transition-colors flex items-center justify-center gap-2"
         >
-          <span>Trip Notes</span>
-          {#if showTripNotes}
-            <ChevronUp size={18} class="text-zinc-400" />
-          {:else}
-            <ChevronDown size={18} class="text-zinc-400" />
-          {/if}
+          <Plus size={16} />
+          Add Category
         </button>
-        {#if showTripNotes}
+      </div>
+
+      <!-- Trip notes expanded card — below inline row -->
+      {#if showTripNotes}
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
           <div class="px-4 py-3">
             <textarea
               bind:value={localList.tripNotes}
@@ -626,8 +671,8 @@
               class="w-full text-sm bg-transparent resize-none focus:outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
             ></textarea>
           </div>
-        {/if}
-      </div>
+        </div>
+      {/if}
 
       <!-- Divider -->
       <div class="border-t border-zinc-200 dark:border-zinc-800"></div>
@@ -684,9 +729,10 @@
               </button>
             {/if}
 
-            <span class="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums flex-shrink-0">
-              {formatWeight(categoryWeight(cat), unit)}
+            <span class="text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+              {cat.items.reduce((s, i) => s + i.quantity, 0)} item{cat.items.reduce((s, i) => s + i.quantity, 0) !== 1 ? 's' : ''}
             </span>
+
           </div>
 
           <!-- Items -->
