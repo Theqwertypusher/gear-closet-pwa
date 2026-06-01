@@ -186,7 +186,7 @@
       <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Your gear. Your trips. Always ready.</p>
     </div>
     <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-4 leading-relaxed">
-      This is an open source project meant to serve the community. App data is not stored in a third-party database — it lives on your device. You own it. Any feedback and / or issues can be reported below. Happy trailblazing.
+      This is an <a href="https://github.com/Theqwertypusher/gear-closet-pwa" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors self-start">open source project</a> meant to serve the community. App data is not stored in a third-party database — it lives on your device. You own it. Any feedback and / or issues can be reported below. Happy trailblazing.
     </p>
     <div class="flex flex-col gap-1.5 mt-3">
       {#if import.meta.env.VITE_FEEDBACK_URL}
