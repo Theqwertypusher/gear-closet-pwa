@@ -5,6 +5,7 @@
   import GearItemRow from './GearItemRow.svelte'
   import GearItemModal from './GearItemModal.svelte'
   import type { GearItem, WeightCategory } from '../lib/types'
+  import { track } from '../lib/analytics'
 
   type FilterTab = 'all' | WeightCategory
   type SortField = 'name' | 'weight'
@@ -35,6 +36,7 @@
       sortField = field
       sortDir = 'asc'
     }
+    track('gear_sorted', { field: sortField, dir: sortDir })
   }
 
   function sortItems(items: GearItem[]): GearItem[] {
@@ -153,7 +155,7 @@
       <div class="flex gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0">
         {#each filterTabs as tab}
           <button
-            onclick={() => { activeFilter = tab.id; activeTag = null }}
+            onclick={() => { activeFilter = tab.id; activeTag = null; track('gear_filtered', { filter: tab.id }) }}
             class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
               {activeFilter === tab.id
                 ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'

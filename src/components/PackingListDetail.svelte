@@ -17,6 +17,7 @@
   import { gearStore } from '../lib/stores/gearStore.svelte'
   import { kitStore } from '../lib/stores/kitStore.svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
+  import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode } from '../lib/types'
 
@@ -74,6 +75,7 @@
     localList.listMode = mode
     localList.isPackingMode = false
     save()
+    track('packing_list_mode_changed', { mode })
   }
 
   // Name editing
@@ -284,16 +286,20 @@
 
   // Toggle checked
   function toggleChecked(catId: string, itemId: string) {
+    let nowChecked = false
     localList.categories = localList.categories.map((cat) => {
       if (cat.id !== catId) return cat
       return {
         ...cat,
-        items: cat.items.map((item) =>
-          item.id === itemId ? { ...item, checked: !item.checked } : item
-        ),
+        items: cat.items.map((item) => {
+          if (item.id !== itemId) return item
+          nowChecked = !item.checked
+          return { ...item, checked: nowChecked }
+        }),
       }
     })
     save()
+    track(nowChecked ? 'packing_item_checked' : 'packing_item_unchecked')
   }
 
   // Remove item from category
@@ -375,6 +381,8 @@
       }
     })
     save()
+    if (toAdd.length > 0) track('gear_added_to_list', { count: toAdd.length })
+    if (toRemoveIds.length > 0) track('gear_removed_from_list', { count: toRemoveIds.length })
     closeItemPicker()
   }
 

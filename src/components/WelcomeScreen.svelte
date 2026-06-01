@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChevronDown, ChevronUp, Smartphone } from '@lucide/svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
+  import { track } from '../lib/analytics'
   import { setGearStoreTutorialMode } from '../lib/stores/gearStore.svelte'
   import { setKitStoreTutorialMode } from '../lib/stores/kitStore.svelte'
   import { setPackingListStoreTutorialMode } from '../lib/stores/packingListStore.svelte'
@@ -12,7 +13,10 @@
 
   let installOpen = $state(false)
 
+  $effect(() => { track('welcome_seen') })
+
   async function chooseTutorial() {
+    track('onboarding_sample_data_chosen')
     setGearStoreTutorialMode(true)
     setKitStoreTutorialMode(true)
     setPackingListStoreTutorialMode(true)
@@ -26,6 +30,7 @@
   }
 
   async function chooseFresh() {
+    track('onboarding_fresh_start_chosen')
     await settingsStore.update({ hasSeenWelcome: true })
     onDone()
   }
@@ -53,7 +58,7 @@
   <div class="w-full max-w-sm space-y-3">
     <!-- App tutorial -->
     <button
-      onclick={onStartTour}
+      onclick={() => { track('onboarding_tour_started'); onStartTour() }}
       class="w-full text-left rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-5 py-5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 active:scale-[0.98]"
     >
       <p class="text-base font-semibold text-zinc-900 dark:text-zinc-100">Start app walkthrough</p>

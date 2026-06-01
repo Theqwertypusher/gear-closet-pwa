@@ -10,6 +10,7 @@
   import { replaceAllData, clearAllData } from '../lib/db'
   import { buildShareUrl } from '../lib/share'
   import ShareModal from './ShareModal.svelte'
+  import { track } from '../lib/analytics'
 
   let { viewingShared = false }: { viewingShared?: boolean } = $props()
 
@@ -40,6 +41,7 @@
 
 
   async function handleTutorialToggleOn() {
+    track('demo_mode_enabled')
     await settingsStore.update({ tutorialMode: true })
     setGearStoreTutorialMode(true)
     setKitStoreTutorialMode(true)
@@ -52,6 +54,7 @@
   }
 
   async function handleTutorialToggleOff() {
+    track('demo_mode_disabled')
     setGearStoreTutorialMode(false)
     setKitStoreTutorialMode(false)
     setPackingListStoreTutorialMode(false)
@@ -97,6 +100,7 @@
       $state.snapshot(settingsStore.settings),
     )
     await settingsStore.update({ lastExportDate: new Date().toISOString() })
+    track('backup_exported')
   }
 
   function triggerImport() {
@@ -129,6 +133,7 @@
         settingsStore.reset(),
       ])
       importStatus = { type: 'success', message: 'Backup imported successfully!' }
+      track('backup_imported')
     } catch (err) {
       importStatus = {
         type: 'error',
@@ -230,7 +235,7 @@
         </p>
       </div>
       <button
-        onclick={() => settingsStore.update({ theme: settingsStore.settings.theme === 'dark' ? 'light' : 'dark' })}
+        onclick={() => { const next = settingsStore.settings.theme === 'dark' ? 'light' : 'dark'; settingsStore.update({ theme: next }); track('theme_toggled', { theme: next }) }}
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors
           {settingsStore.settings.theme === 'dark' ? 'bg-zinc-800 dark:bg-zinc-200' : 'bg-zinc-300 dark:bg-zinc-600'}"
         role="switch"

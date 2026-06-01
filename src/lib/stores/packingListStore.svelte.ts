@@ -1,6 +1,7 @@
 import { getAllPackingLists, putPackingList, deletePackingList as dbDeletePackingList, getSettings } from '../db'
 import type { PackingList, PackingListCategory } from '../types'
 import { TUTORIAL_PACKING_LISTS } from '../tutorialData'
+import { track } from '../analytics'
 
 let isTutorial = false
 
@@ -78,6 +79,7 @@ function createPackingListStore() {
       await putPackingList(list)
     }
     lists = [...lists, list]
+    if (!isTutorial) track('packing_list_created', { category_count: list.categories.length })
     return list
   }
 
@@ -130,6 +132,7 @@ function createPackingListStore() {
       await putPackingList(copy)
     }
     lists = [...lists, copy]
+    if (!isTutorial) track('packing_list_duplicated')
     return copy
   }
 
@@ -139,9 +142,11 @@ function createPackingListStore() {
     }
     lists = lists.filter((l) => l.id !== id)
     if (activeListId === id) activeListId = null
+    if (!isTutorial) track('packing_list_deleted')
   }
 
   function setActiveList(id: string | null) {
+    if (id && !isTutorial) track('packing_list_opened')
     activeListId = id
   }
 
