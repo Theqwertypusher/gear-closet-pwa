@@ -273,7 +273,8 @@
   <!-- FAB -->
   <button
     onclick={openAdd}
-    class="fixed bottom-20 right-4 z-20 w-14 h-14 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-lg flex items-center justify-center hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all"
+    class="fixed right-4 z-20 w-14 h-14 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-lg flex items-center justify-center hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all"
+    style="bottom: calc(4.5rem + env(safe-area-inset-bottom))"
     aria-label="Add gear item"
   >
     <Plus size={24} />

@@ -192,7 +192,8 @@
     <!-- FAB -->
     <button
       onclick={() => (showCreateModal = true)}
-      class="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors flex items-center justify-center z-20"
+      class="fixed right-4 w-14 h-14 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors flex items-center justify-center z-20"
+      style="bottom: calc(4.5rem + env(safe-area-inset-bottom))"
       aria-label="New packing list"
     >
       <Plus size={26} />
