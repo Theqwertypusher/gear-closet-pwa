@@ -7,6 +7,7 @@
   import SettingsScreen from './components/Settings.svelte'
   import WelcomeScreen from './components/WelcomeScreen.svelte'
   import AppTour from './components/AppTour.svelte'
+  import UpdatePrompt from './components/UpdatePrompt.svelte'
   import { gearStore } from './lib/stores/gearStore.svelte'
   import { packingListStore } from './lib/stores/packingListStore.svelte'
   import { importBackup } from './lib/backup'
@@ -320,6 +321,8 @@
     }
   }
 </script>
+
+<UpdatePrompt />
 
 {#if showTour}
   <AppTour onDone={() => { showTour = false; onWelcomeDone() }} />

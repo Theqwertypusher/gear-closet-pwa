@@ -20,7 +20,7 @@ export default defineConfig({
     tailwindcss(),
     svelte(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Gear Closet',
