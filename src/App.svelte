@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Backpack, Package, List, Settings as SettingsIcon } from '@lucide/svelte'
+  import { inject } from '@vercel/analytics'
   import GearCloset from './components/GearCloset.svelte'
   import Kits from './components/Kits.svelte'
   import PackingLists from './components/PackingLists.svelte'
@@ -259,6 +260,11 @@
   $effect(() => {
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
+  })
+
+  // Initialize Vercel Analytics
+  $effect(() => {
+    inject({ mode: 'auto' })
   })
 
   $effect(() => {
