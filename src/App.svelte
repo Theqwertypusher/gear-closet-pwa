@@ -322,8 +322,6 @@
   }
 </script>
 
-<UpdatePrompt />
-
 {#if showTour}
   <AppTour onDone={() => { showTour = false; onWelcomeDone() }} />
 {:else if showWelcomeScreen}
@@ -356,6 +354,8 @@
       </button>
       {/if}
     </header>
+
+    <UpdatePrompt />
 
     <!-- Demo mode banner -->
     {#if showTutorialBanner}
