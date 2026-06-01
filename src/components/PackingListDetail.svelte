@@ -72,8 +72,7 @@
 
   function setListMode(mode: ListMode) {
     localList.listMode = mode
-    // exit packing mode when switching away from final
-    if (mode !== 'final') localList.isPackingMode = false
+    localList.isPackingMode = false
     save()
   }
 
@@ -177,6 +176,19 @@
     }
     window.addEventListener('shortcut:add', onShortcut)
     return () => window.removeEventListener('shortcut:add', onShortcut)
+  })
+
+  $effect(() => {
+    function onKeydown(e: KeyboardEvent) {
+      // Ignore when typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === 'd') setListMode('draft')
+      else if (e.key === 'f') setListMode('final')
+      else if (e.key === 'p') togglePackingMode()
+    }
+    window.addEventListener('keydown', onKeydown)
+    return () => window.removeEventListener('keydown', onKeydown)
   })
 
   // ── Held-key cycling helpers ─────────────────────────────────────────────
@@ -456,49 +468,17 @@
         <button
           onclick={() => setListMode('draft')}
           class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
-            {(localList.listMode ?? 'draft') === 'draft'
+            {(localList.listMode ?? 'draft') === 'draft' && !localList.isPackingMode
               ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
         >Draft</button>
         <button
           onclick={() => setListMode('final')}
           class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
-            {(localList.listMode ?? 'draft') === 'final'
+            {(localList.listMode ?? 'draft') === 'final' && !localList.isPackingMode
               ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
         >Final</button>
-        {#if (localList.listMode ?? 'draft') === 'final'}
-          <button
-            onclick={togglePackingMode}
-            class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
-              {localList.isPackingMode
-                ? 'bg-green-700 dark:bg-green-800 text-white shadow-sm shadow-green-900/20'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-          >
-            <Check size={12} />
-            {localList.isPackingMode ? 'Packing' : 'Start Packing'}
-          </button>
-        {/if}
-      </div>
-    </div>
-
-    <!-- Row 2: mode pills — mobile only -->
-    <div class="flex sm:hidden items-center gap-1.5 mt-2">
-      <button
-        onclick={() => setListMode('draft')}
-        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
-          {(localList.listMode ?? 'draft') === 'draft'
-            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
-            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-      >Draft</button>
-      <button
-        onclick={() => setListMode('final')}
-        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
-          {(localList.listMode ?? 'draft') === 'final'
-            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
-            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
-      >Final</button>
-      {#if (localList.listMode ?? 'draft') === 'final'}
         <button
           onclick={togglePackingMode}
           class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
@@ -509,7 +489,35 @@
           <Check size={12} />
           {localList.isPackingMode ? 'Packing' : 'Start Packing'}
         </button>
-      {/if}
+      </div>
+    </div>
+
+    <!-- Row 2: mode pills — mobile only -->
+    <div class="flex sm:hidden items-center gap-1.5 mt-2">
+      <button
+        onclick={() => setListMode('draft')}
+        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+          {(localList.listMode ?? 'draft') === 'draft' && !localList.isPackingMode
+            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >Draft</button>
+      <button
+        onclick={() => setListMode('final')}
+        class="px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+          {(localList.listMode ?? 'draft') === 'final' && !localList.isPackingMode
+            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >Final</button>
+      <button
+        onclick={togglePackingMode}
+        class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors
+          {localList.isPackingMode
+            ? 'bg-green-700 dark:bg-green-800 text-white shadow-sm shadow-green-900/20'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >
+        <Check size={12} />
+        {localList.isPackingMode ? 'Packing' : 'Start Packing'}
+      </button>
     </div>
   </header>
 

@@ -61,6 +61,7 @@ export interface AppSettings {
   tutorialMode: boolean
   hasSeenWelcome: boolean
   theme: AppTheme
+  demoModeLocked: boolean
 }
 
 export interface AppState {

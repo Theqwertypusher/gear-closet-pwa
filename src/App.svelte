@@ -204,6 +204,7 @@
     }
 
     if (k === 't' || k === 'T') {
+      if (settingsStore.settings.demoModeLocked) return
       if (settingsStore.settings.tutorialMode) {
         setGearStoreTutorialMode(false)
         setKitStoreTutorialMode(false)
@@ -269,6 +270,21 @@
     return () => window.removeEventListener('navigate:tab', onNavigateTab)
   })
 
+  $effect(() => {
+    const tabNames: Record<Tab, string> = {
+      'gear': 'Gear Closet',
+      'kits': 'Kits',
+      'packing-lists': 'Packing Lists',
+      'settings': 'Settings',
+    }
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'page_view', {
+        page_title: tabNames[activeTab],
+        page_location: `${window.location.origin}/${activeTab}`,
+      })
+    }
+  })
+
   function onWelcomeDone() {
     // If tutorial mode was just enabled show a toast
     if (settingsStore.settings.tutorialMode) {
@@ -310,6 +326,7 @@
       <h1 class="text-xl font-semibold tracking-tight">
         Gear Closet
       </h1>
+      {#if activeTab !== 'settings'}
       <button
         onclick={() => {
           const units: import('./lib/types').WeightUnit[] = ['g', 'oz', 'lbs', 'kg']
@@ -323,6 +340,7 @@
       >
         {settingsStore.settings.weightUnit}
       </button>
+      {/if}
     </header>
 
     <!-- Demo mode banner -->

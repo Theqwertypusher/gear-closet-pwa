@@ -57,15 +57,8 @@
   </button>
 
   <!-- Right column: weight + actions, absolutely positioned so it never overlaps the edit button's click area via bubbling -->
-  <div class="absolute top-0 right-0 bottom-0 flex flex-col items-end justify-between p-3 pointer-events-none">
-    {#if kitItems.length > 0}
-      <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 pt-1">
-        {formatWeight(totalWeight, weightUnit)}
-      </span>
-    {:else}
-      <span></span>
-    {/if}
-
+  <div class="absolute top-0 right-0 bottom-0 flex flex-col items-end justify-between px-3 pb-3 pt-[14px] pointer-events-none">
+    <!-- Actions on top, aligned with title -->
     <div class="pointer-events-auto">
       {#if confirmDelete}
         <div class="flex items-center gap-2">
@@ -109,5 +102,14 @@
         </div>
       {/if}
     </div>
+
+    <!-- Weight on bottom -->
+    {#if kitItems.length > 0}
+      <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 pb-1">
+        {formatWeight(totalWeight, weightUnit)}
+      </span>
+    {:else}
+      <span></span>
+    {/if}
   </div>
 </div>

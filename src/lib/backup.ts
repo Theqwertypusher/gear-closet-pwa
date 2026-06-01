@@ -20,10 +20,11 @@ export function exportBackup(
   const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
 
-  const date = exportedAt.slice(0, 10) // YYYY-MM-DD
+  const d = new Date(exportedAt)
+  const date = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
   const a = document.createElement('a')
   a.href = url
-  a.download = `gear-closet-backup-${date}.json`
+  a.download = `${date}-gear-closet-backup.json`
   a.click()
   URL.revokeObjectURL(url)
 }
