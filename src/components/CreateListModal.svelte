@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, Plus, Trash2 } from '@lucide/svelte'
-  import { focusTrap } from '../lib/focusTrap'
+  import BottomSheet from './BottomSheet.svelte'
 
   const DEFAULT_CATEGORIES = [
     'Big Three',
@@ -50,10 +50,6 @@
     onclose()
   }
 
-  function handleBackdrop(e: MouseEvent) {
-    if (e.target === e.currentTarget) onclose()
-  }
-
   $effect(() => {
     const handler = () => onclose()
     window.addEventListener('shortcut:escape', handler)
@@ -61,15 +57,9 @@
   })
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
-  onclick={handleBackdrop}
->
-  <div class="w-full sm:max-w-md bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl" use:focusTrap>
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 pt-6 pb-4">
+<BottomSheet {onclose}>
+  <!-- Header -->
+  <div class="flex items-center justify-between px-6 pt-4 pb-4 flex-shrink-0">
       <h2 class="text-lg font-semibold">New Packing List</h2>
       <button
         onclick={onclose}
@@ -160,28 +150,27 @@
       </form>
     </div>
 
-    <!-- Footer actions -->
-    <div class="flex gap-3 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800">
-      <button
-        type="button"
-        onclick={onclose}
-        class="flex-1 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700
-          text-sm font-medium text-zinc-700 dark:text-zinc-300
-          hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-      >
-        Cancel
-      </button>
-      <button
-        type="submit"
-        form="create-list-form"
-        disabled={!name.trim()}
-        class="flex-1 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100
-          text-sm font-medium text-white dark:text-zinc-900
-          hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors
-          disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Create
-      </button>
-    </div>
+  <!-- Footer actions -->
+  <div class="flex gap-3 px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex-shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom))">
+    <button
+      type="button"
+      onclick={onclose}
+      class="flex-1 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700
+        text-sm font-medium text-zinc-700 dark:text-zinc-300
+        hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="create-list-form"
+      disabled={!name.trim()}
+      class="flex-1 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100
+        text-sm font-medium text-white dark:text-zinc-900
+        hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors
+        disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      Create
+    </button>
   </div>
-</div>
+</BottomSheet>

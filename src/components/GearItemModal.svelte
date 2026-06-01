@@ -2,7 +2,7 @@
   import { X } from '@lucide/svelte'
   import type { GearItem, WeightCategory, WeightUnit } from '../lib/types'
   import { gearStore } from '../lib/stores/gearStore.svelte'
-  import { focusTrap } from '../lib/focusTrap'
+  import BottomSheet from './BottomSheet.svelte'
 
   interface Props {
     item?: GearItem | null
@@ -44,10 +44,6 @@
     })
   }
 
-  function handleBackdrop(e: MouseEvent) {
-    if (e.target === e.currentTarget) onClose()
-  }
-
   $effect(() => {
     const handler = () => onClose()
     window.addEventListener('shortcut:escape', handler)
@@ -61,23 +57,8 @@
   ]
 </script>
 
-<!-- Backdrop -->
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<div
-  class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
-  role="dialog"
-  aria-modal="true"
-  aria-label={item ? 'Edit gear item' : 'Add gear item'}
-  onmousedown={handleBackdrop}
->
-  <!-- Sheet -->
-  <div class="w-full sm:max-w-md bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl animate-slide-up" use:focusTrap>
-    <!-- Handle bar (mobile) -->
-    <div class="flex justify-center pt-3 pb-1 sm:hidden">
-      <div class="w-10 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full"></div>
-    </div>
-
-    <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+<BottomSheet onclose={onClose}>
+  <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex-shrink-0">
       <h2 class="text-lg font-semibold">{item ? 'Edit Item' : 'Add Item'}</h2>
       <button
         onclick={onClose}
@@ -218,20 +199,19 @@
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex gap-3 px-5 py-4 border-t border-zinc-100 dark:border-zinc-800">
-      <button
-        onclick={onClose}
-        class="flex-1 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-      >
-        Cancel
-      </button>
-      <button
-        onclick={handleSave}
-        class="flex-1 py-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
-      >
-        {item ? 'Save Changes' : 'Add Item'}
-      </button>
-    </div>
+  <!-- Actions -->
+  <div class="flex gap-3 px-5 py-4 border-t border-zinc-100 dark:border-zinc-800 flex-shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom))">
+    <button
+      onclick={onClose}
+      class="flex-1 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+    >
+      Cancel
+    </button>
+    <button
+      onclick={handleSave}
+      class="flex-1 py-2.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+    >
+      {item ? 'Save Changes' : 'Add Item'}
+    </button>
   </div>
-</div>
+</BottomSheet>
