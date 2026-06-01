@@ -27,6 +27,13 @@
     await kitStore.reorderKits(e.detail.items)
   }
 
+  function transformDraggedElement(el: HTMLElement) {
+    el.style.outline = '2px solid #6366f1'
+    el.style.outlineOffset = '2px'
+    el.style.borderRadius = '12px'
+    el.style.opacity = '0.95'
+  }
+
   let modalOpen = $state(false)
   let editingKit = $state<Kit | null>(null)
 
@@ -87,12 +94,13 @@
     </div>
   {:else}
     <div
-      use:dndzone={{ items: dragKits, flipDurationMs: 200 }}
+      use:dndzone={{ items: dragKits, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {} }}
       onconsider={handleDndConsider}
       onfinalize={handleDndFinalize}
       class="px-3 pt-4 space-y-3 pb-24"
     >
       {#each dragKits as kit (kit.id)}
+        <div class={(kit as any).isDndShadowItem ? 'rounded-xl outline outline-2 outline-indigo-500 outline-offset-2 opacity-40' : ''}>
         <KitCard
           {kit}
           gearItems={gearStore.items}
@@ -101,6 +109,7 @@
           onDuplicate={() => handleDuplicate(kit.id)}
           onDelete={() => handleDelete(kit.id)}
         />
+        </div>
       {/each}
     </div>
   {/if}

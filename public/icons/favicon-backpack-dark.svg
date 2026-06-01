@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+<title>Gear Closet backpack icon</title><desc>Simplified minimal backpack icon.</desc>
+<g fill="none" stroke="#FFFFFF" stroke-width="72" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M398 266v-45c0-69 51-120 114-120s114 51 114 120v45"/>
+  <path d="M234 884V404c0-94 76-170 170-170h216c94 0 170 76 170 170v480c0 55-45 100-100 100H334c-55 0-100-45-100-100Z"/>
+  <path d="M234 565c-70 38-108 98-108 176 0 76 43 132 108 154"/>
+  <path d="M790 565c70 38 108 98 108 176 0 76-43 132-108 154"/>
+</g>
+<path fill="#FFFFFF" d="M336 674h352v205c0 28-23 51-51 51H387c-28 0-51-23-51-51V674Z"/>
+</svg>

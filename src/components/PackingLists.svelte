@@ -64,6 +64,13 @@
     await packingListStore.reorderLists(e.detail.items)
   }
 
+  function transformDraggedElement(el: HTMLElement) {
+    el.style.outline = '2px solid #6366f1'
+    el.style.outlineOffset = '2px'
+    el.style.borderRadius = '12px'
+    el.style.opacity = '0.95'
+  }
+
   function openList(list: PackingList) {
     packingListStore.setActiveList(list.id)
   }
@@ -96,7 +103,7 @@
         </div>
       {:else}
         <div
-          use:dndzone={{ items: dragLists, flipDurationMs: 200 }}
+          use:dndzone={{ items: dragLists, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {} }}
           onconsider={handleDndConsider}
           onfinalize={handleDndFinalize}
           class="space-y-3"
@@ -104,6 +111,7 @@
           {#each dragLists as list (list.id)}
             {@const weights = computePackingListWeights(list, gearItemsMap, unit)}
             {@const itemCount = totalItemCount(list)}
+            <div class={(list as any).isDndShadowItem ? 'rounded-xl outline outline-2 outline-indigo-500 outline-offset-2 opacity-40' : ''}>
             <!-- svelte-ignore a11y_interactive_supports_focus -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
@@ -174,6 +182,7 @@
                   <p class="text-xs font-bold tabular-nums text-zinc-800 dark:text-zinc-200">{formatWeight(weights.total, unit)}</p>
                 </div>
               </div>
+            </div>
             </div>
           {/each}
         </div>
