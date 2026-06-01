@@ -1,6 +1,7 @@
 <script lang="ts">
   import { scale } from 'svelte/transition'
   import { Check, Link } from '@lucide/svelte'
+  import BottomSheet from './BottomSheet.svelte'
   import { packingListStore } from '../lib/stores/packingListStore.svelte'
   import { gearStore } from '../lib/stores/gearStore.svelte'
   import { kitStore } from '../lib/stores/kitStore.svelte'
@@ -70,15 +71,9 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
-  onclick={(e) => { if (e.target === e.currentTarget) onclose() }}
->
-  <div class="w-full sm:max-w-sm bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[80vh]">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 pt-6 pb-3">
+<BottomSheet {onclose}>
+  <!-- Header -->
+  <div class="flex items-center justify-between px-6 pt-4 pb-3 flex-shrink-0">
       <div>
         <p class="font-semibold text-zinc-900 dark:text-zinc-100">Share a link</p>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Select lists to include</p>
@@ -120,8 +115,8 @@
       {/if}
     </div>
 
-    <!-- Footer -->
-    <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-2">
+  <!-- Footer -->
+  <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-2 flex-shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom))">
       {#if selected.size > 0}
         <p class="text-xs text-zinc-400 dark:text-zinc-500 text-center">
           {filteredGearItems.length} gear item{filteredGearItems.length !== 1 ? 's' : ''} will be included
@@ -153,6 +148,5 @@
       >
         Cancel
       </button>
-    </div>
   </div>
-</div>
+</BottomSheet>

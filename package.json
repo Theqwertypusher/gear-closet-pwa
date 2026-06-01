@@ -36,6 +36,7 @@
     "lucide-svelte": "^1.0.1",
     "pako": "^2.1.0",
     "svelte-dnd-action": "^0.9.69",
+    "vaul-svelte": "^0.3.2",
     "zod": "^4.4.3"
   }
 }
