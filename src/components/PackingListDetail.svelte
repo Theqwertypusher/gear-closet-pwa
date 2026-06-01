@@ -259,6 +259,13 @@
     save()
   }
 
+  function transformDraggedElement(el: HTMLElement) {
+    el.style.outline = '2px solid #6366f1'
+    el.style.outlineOffset = '2px'
+    el.style.borderRadius = '12px'
+    el.style.opacity = '0.95'
+  }
+
   // Quantity stepper
   function changeQty(catId: string, itemId: string, delta: number) {
     localList.categories = localList.categories.map((cat) => {
@@ -686,13 +693,14 @@
       <div class="border-t border-zinc-200 dark:border-zinc-800"></div>
 
       <div
-        use:dndzone={{ items: dragCategories, flipDurationMs: 200 }}
+        use:dndzone={{ items: dragCategories, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {} }}
         onconsider={handleCatConsider}
         onfinalize={handleCatFinalize}
         class="space-y-3"
       >
       {#each dragCategories as cat (cat.id)}
         {@const collapsed = collapsedCategories.has(cat.id)}
+        <div class={(cat as any).isDndShadowItem ? 'rounded-xl outline outline-2 outline-indigo-500 outline-offset-2 opacity-40' : ''}>
         <div class="rounded-xl border overflow-hidden transition-colors
           {cat.id === newCatId
             ? 'border-zinc-400 dark:border-zinc-500 animate-cat-pop'
@@ -874,6 +882,7 @@
               </div>
             </div>
           {/if}
+        </div>
         </div>
       {/each}
       </div>

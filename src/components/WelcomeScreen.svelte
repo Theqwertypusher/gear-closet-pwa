@@ -35,6 +35,16 @@
 
   <!-- App name -->
   <div class="mb-10 text-center">
+    <img
+      src="/icons/logo-light.svg"
+      alt="Gear Closet logo"
+      class="h-20 w-auto mx-auto mb-4 dark:hidden"
+    />
+    <img
+      src="/icons/logo-dark.svg"
+      alt="Gear Closet logo"
+      class="h-20 w-auto mx-auto mb-4 hidden dark:block"
+    />
     <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Gear Closet</h1>
     <p class="mt-2 text-base text-zinc-500 dark:text-zinc-400">Your gear. Your trips. Always ready.</p>
   </div>

@@ -323,8 +323,13 @@
   <div class="flex flex-col min-h-svh bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
-      <h1 class="text-xl font-semibold tracking-tight">
-        Gear Closet
+      <h1 class="flex items-center gap-2">
+        <img
+          src={settingsStore.settings.theme === 'dark' ? '/icons/logo-dark.svg' : '/icons/logo-light.svg'}
+          alt="Gear Closet logo"
+          class="h-8 w-auto"
+        />
+        <span class="text-xl font-semibold tracking-tight">Gear Closet</span>
       </h1>
       {#if activeTab !== 'settings'}
       <button
