@@ -8,19 +8,22 @@
     },
   })
 
+  const forceShow = false
+
   function reload() {
     updateServiceWorker(true)
   }
 </script>
 
-{#if $needRefresh}
-  <div class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 bg-indigo-600 text-white text-sm shadow-lg">
-    <span class="font-medium">A new version is available.</span>
+{#if $needRefresh || forceShow}
+  <div class="w-full flex items-center justify-center gap-2 px-4 py-2 border-b border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 text-sm">
+    <span class="font-medium text-purple-900 dark:text-purple-100">A new version is available</span>
+    <span class="text-purple-400 dark:text-purple-600">·</span>
     <button
       onclick={reload}
-      class="shrink-0 px-3 py-1 rounded-full bg-white text-indigo-600 font-semibold text-xs hover:bg-indigo-50 transition-colors"
+      class="shrink-0 text-xs font-semibold px-3 py-1 rounded-md border border-purple-400 dark:border-purple-600 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
     >
-      Update now
+      Update
     </button>
   </div>
 {/if}
