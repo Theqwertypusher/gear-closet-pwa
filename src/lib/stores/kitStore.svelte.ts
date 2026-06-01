@@ -1,6 +1,7 @@
 import { getAllKits, putKit, deleteKit as dbDeleteKit, getSettings } from '../db'
 import type { Kit } from '../types'
 import { TUTORIAL_KITS } from '../tutorialData'
+import { track } from '../analytics'
 
 let isTutorial = false
 
@@ -52,6 +53,7 @@ function createKitStore() {
       await putKit(kit)
     }
     kits = [...kits, kit]
+    if (!isTutorial) track('kit_created', { item_count: kit.itemIds.length })
   }
 
   async function reorderKits(reordered: Kit[]) {
@@ -74,6 +76,7 @@ function createKitStore() {
       await putKit(updated)
     }
     kits = kits.map((k) => (k.id === id ? updated : k))
+    if (!isTutorial) track('kit_edited')
   }
 
   async function duplicateKit(id: string) {
@@ -92,6 +95,7 @@ function createKitStore() {
       await putKit(copy)
     }
     kits = [...kits, copy]
+    if (!isTutorial) track('kit_duplicated')
   }
 
   async function deleteKit(id: string) {
@@ -99,6 +103,7 @@ function createKitStore() {
       await dbDeleteKit(id)
     }
     kits = kits.filter((k) => k.id !== id)
+    if (!isTutorial) track('kit_deleted')
   }
 
   async function reset() {

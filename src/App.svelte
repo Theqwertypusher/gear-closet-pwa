@@ -24,6 +24,7 @@
   import {
     setPackingListStoreTutorialMode,
   } from './lib/stores/packingListStore.svelte'
+  import { track } from './lib/analytics'
 
   type Tab = 'gear' | 'kits' | 'packing-lists' | 'settings'
 
@@ -56,6 +57,7 @@
       packingListStore.loadShared(payload.packingLists)
       viewingShared = true
       activeTab = 'packing-lists'
+      track('share_link_received', { list_count: payload.packingLists.length })
       return // never fall through to tutorial loading
     }
 
@@ -343,7 +345,9 @@
         onclick={() => {
           const units: import('./lib/types').WeightUnit[] = ['g', 'oz', 'lbs', 'kg']
           const idx = units.indexOf(settingsStore.settings.weightUnit)
-          settingsStore.update({ weightUnit: units[(idx + 1) % units.length] })
+          const next = units[(idx + 1) % units.length]
+          settingsStore.update({ weightUnit: next })
+          track('weight_unit_changed', { unit: next })
         }}
         class="px-3 py-1 rounded-full text-sm font-semibold border border-zinc-200 dark:border-zinc-700
           bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300

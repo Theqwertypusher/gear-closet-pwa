@@ -1,6 +1,7 @@
 import { getAllGearItems, putGearItem, deleteGearItem, getSettings } from '../db'
 import type { GearItem, WeightCategory } from '../types'
 import { TUTORIAL_GEAR_ITEMS } from '../tutorialData'
+import { track } from '../analytics'
 
 let isTutorial = false
 
@@ -49,6 +50,7 @@ function createGearStore() {
       await putGearItem(item)
     }
     items = [...items, item]
+    if (!isTutorial) track('gear_item_added', { weight_category: item.weightCategory })
   }
 
   async function updateItem(id: string, data: Partial<Omit<GearItem, 'id' | 'createdAt'>>) {
@@ -63,6 +65,7 @@ function createGearStore() {
       await putGearItem(updated)
     }
     items = items.map((i) => (i.id === id ? updated : i))
+    if (!isTutorial) track('gear_item_edited', { weight_category: updated.weightCategory })
   }
 
   async function deleteItem(id: string) {
@@ -70,6 +73,7 @@ function createGearStore() {
       await deleteGearItem(id)
     }
     items = items.filter((i) => i.id !== id)
+    if (!isTutorial) track('gear_item_deleted')
   }
 
   function filteredItems(category: WeightCategory | 'all') {

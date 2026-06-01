@@ -6,6 +6,7 @@
   import { gearStore } from '../lib/stores/gearStore.svelte'
   import { kitStore } from '../lib/stores/kitStore.svelte'
   import { buildShareUrl } from '../lib/share'
+  import { track } from '../lib/analytics'
 
   interface Props {
     onclose: () => void
@@ -61,6 +62,7 @@
       $state.snapshot(selectedLists),
     )
     await navigator.clipboard.writeText(url)
+    track('share_link_copied', { list_count: selected.size })
     copied = true
     setTimeout(() => { copied = false }, 2500)
   }
