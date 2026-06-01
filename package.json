@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.16.0",
+    "@vercel/speed-insights": "^2.0.0",
     "bits-ui": "^2.18.1",
     "idb": "^8.0.3",
     "lucide-svelte": "^1.0.1",
