@@ -15,6 +15,7 @@
   import { readShareParam, clearShareParam, type SharePayload } from './lib/share'
   import { kitStore } from './lib/stores/kitStore.svelte'
   import { settingsStore } from './lib/stores/settingsStore.svelte'
+  import { sessionStore } from './lib/stores/sessionStore.svelte'
   import {
     setGearStoreTutorialMode,
   } from './lib/stores/gearStore.svelte'
@@ -59,6 +60,15 @@
       activeTab = 'packing-lists'
       track('share_link_received', { list_count: payload.packingLists.length })
       return // never fall through to tutorial loading
+    }
+
+    // Session join link (?session=<hostPeerId>)
+    const sessionParam = new URLSearchParams(window.location.search).get('session')
+    if (sessionParam) {
+      window.history.replaceState({}, '', window.location.pathname)
+      activeTab = 'packing-lists'
+      sessionStore.joinSession(sessionParam, settingsStore.settings.displayName || 'Me')
+      return
     }
 
     // No share link — load tutorial/demo data if enabled
@@ -271,6 +281,21 @@
   // Initialize Vercel Analytics
   $effect(() => {
     inject({ mode: 'auto' })
+  })
+
+  // PWA install tracking
+  $effect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      track('app_opened_as_pwa')
+    }
+    function onInstallPrompt() { track('pwa_install_prompt_shown') }
+    function onInstalled() { track('pwa_installed') }
+    window.addEventListener('beforeinstallprompt', onInstallPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onInstallPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
   })
 
   $effect(() => {
