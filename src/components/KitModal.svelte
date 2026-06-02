@@ -54,9 +54,12 @@
     return 1000 - idx // earlier match = higher score
   }
 
+  const SELECTED_FILTER = '__selected__'
+
   const pickerItems = $derived(() => {
     let items = gearItems
-    if (activeType) items = items.filter((i) => i.itemType === activeType)
+    if (activeType === SELECTED_FILTER) items = items.filter((i) => selectedIds.has(i.id))
+    else if (activeType) items = items.filter((i) => i.itemType === activeType)
     const q = search.trim()
     if (q) {
       items = items
@@ -96,6 +99,8 @@
     if (next.has(id)) next.delete(id)
     else next.add(id)
     selectedIds = next
+    // Clear selected filter if no items remain selected
+    if (next.size === 0 && activeType === SELECTED_FILTER) activeType = null
   }
 
   function validate(): boolean {
@@ -182,8 +187,20 @@
           <p class="text-sm text-zinc-400 dark:text-zinc-500 py-4 text-center">No gear items yet. Add some gear first.</p>
         {:else}
           <!-- Item type filter tags -->
-          {#if itemTypes.length > 0}
+          {#if selectedIds.size > 0 || itemTypes.length > 0}
             <div class="flex gap-1.5 flex-wrap">
+              {#if selectedIds.size > 0}
+                <button
+                  type="button"
+                  onclick={() => activeType = activeType === SELECTED_FILTER ? null : SELECTED_FILTER}
+                  class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                    {activeType === SELECTED_FILTER
+                      ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                >
+                  Selected ({selectedIds.size})
+                </button>
+              {/if}
               {#each itemTypes as type}
                 <button
                   type="button"
