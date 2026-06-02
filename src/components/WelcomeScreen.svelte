@@ -12,6 +12,7 @@
   let { onDone, onStartTour }: { onDone: () => void; onStartTour: () => void } = $props()
 
   let installOpen = $state(false)
+  let displayName = $state('')
 
   $effect(() => { track('welcome_seen') })
 
@@ -20,7 +21,7 @@
     setGearStoreTutorialMode(true)
     setKitStoreTutorialMode(true)
     setPackingListStoreTutorialMode(true)
-    await settingsStore.update({ tutorialMode: true, hasSeenWelcome: true })
+    await settingsStore.update({ tutorialMode: true, hasSeenWelcome: true, displayName: displayName.trim() || 'Me' })
     await Promise.all([
       gearStore.loadTutorial(),
       kitStore.loadTutorial(),
@@ -31,7 +32,7 @@
 
   async function chooseFresh() {
     track('onboarding_fresh_start_chosen')
-    await settingsStore.update({ hasSeenWelcome: true })
+    await settingsStore.update({ hasSeenWelcome: true, displayName: displayName.trim() || 'Me' })
     onDone()
   }
 </script>
@@ -52,6 +53,17 @@
     />
     <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Gear Closet</h1>
     <p class="mt-2 text-base text-zinc-500 dark:text-zinc-400">Your gear. Your trips. Always ready.</p>
+  </div>
+
+  <!-- Display name input -->
+  <div class="w-full max-w-sm mb-6">
+    <input
+      type="text"
+      bind:value={displayName}
+      placeholder="Your name"
+      class="w-full px-4 py-3 rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
+    />
+    <p class="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center">Used when collaborating with others.</p>
   </div>
 
   <!-- Option cards -->

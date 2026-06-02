@@ -15,13 +15,9 @@
 
   let { kit = null, gearItems, weightUnit, onSave, onClose }: Props = $props()
 
-  const initialName = kit?.name ?? ''
-  const initialDesc = kit?.description ?? ''
-  const initialIds = kit?.itemIds ?? []
-
-  let name = $state(initialName)
-  let description = $state(initialDesc)
-  let selectedIds = $state(new Set<string>(initialIds))
+  let name = $state(kit?.name ?? '')
+  let description = $state(kit?.description ?? '')
+  let selectedIds = $state(new Set<string>(kit?.itemIds ?? []))
 
   let errors = $state<{ name?: string; items?: string }>({})
 
@@ -40,6 +36,16 @@
   // Search + filter state
   let search = $state('')
   let activeType = $state<string | null>(null)
+  let activeOwner = $state<string | null>(null) // null = All
+
+  // Owner names derived from gear items
+  const ownerNames = $derived(() => {
+    const names = new Set<string>()
+    for (const item of gearItems) {
+      if (item.ownerName) names.add(item.ownerName)
+    }
+    return [...names].sort()
+  })
 
   // Item type tags from the gear store (alphabetical)
   const itemTypes = $derived(gearStore.itemTypes)
@@ -58,6 +64,7 @@
 
   const pickerItems = $derived(() => {
     let items = gearItems
+    if (activeOwner) items = items.filter((i) => i.ownerName === activeOwner)
     if (activeType === SELECTED_FILTER) items = items.filter((i) => selectedIds.has(i.id))
     else if (activeType) items = items.filter((i) => i.itemType === activeType)
     const q = search.trim()
@@ -186,6 +193,30 @@
         {#if gearItems.length === 0}
           <p class="text-sm text-zinc-400 dark:text-zinc-500 py-4 text-center">No gear items yet. Add some gear first.</p>
         {:else}
+          <!-- Owner filter pills -->
+          {#if ownerNames().length > 1}
+            <div class="flex gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onclick={() => activeOwner = null}
+                class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                  {activeOwner === null
+                    ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+              >All</button>
+              {#each ownerNames() as owner}
+                <button
+                  type="button"
+                  onclick={() => activeOwner = activeOwner === owner ? null : owner}
+                  class="px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                    {activeOwner === owner
+                      ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+                >{owner}</button>
+              {/each}
+            </div>
+          {/if}
+
           <!-- Item type filter tags -->
           {#if selectedIds.size > 0 || itemTypes.length > 0}
             <div class="flex gap-1.5 flex-wrap">

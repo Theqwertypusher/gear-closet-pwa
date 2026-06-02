@@ -32,6 +32,7 @@ function backfillList(l: PackingList, i: number): PackingList {
   return {
     sortOrder: i,
     listMode: 'draft',
+    packers: [],
     ...l,
     categories: l.categories.map((c, ci) => ({ sortOrder: ci, ...c })),
   }
