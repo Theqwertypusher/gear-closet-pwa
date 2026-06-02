@@ -11,6 +11,8 @@ export interface GearItem {
   weightUnit: WeightUnit
   weightCategory: WeightCategory
   notes: string
+  ownerName?: string
+  ownerId?: string
   createdAt: string
   updatedAt: string
 }
@@ -25,11 +27,20 @@ export interface Kit {
   updatedAt: string
 }
 
+export interface Packer {
+  id: string
+  name: string
+  color: string
+}
+
+export const PACKER_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#14b8a6', '#8b5cf6']
+
 export interface PackingListItem {
   id: string
   gearItemId: string
   quantity: number
   checked: boolean
+  assigneeId?: string
 }
 
 export interface PackingListCategory {
@@ -48,6 +59,7 @@ export interface PackingList {
   tripNotes: string
   isPackingMode: boolean
   listMode: ListMode
+  packers: Packer[]
   sortOrder: number
   createdAt: string
   updatedAt: string
@@ -62,6 +74,7 @@ export interface AppSettings {
   hasSeenWelcome: boolean
   theme: AppTheme
   demoModeLocked: boolean
+  displayName: string
 }
 
 export interface AppState {

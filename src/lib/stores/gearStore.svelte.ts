@@ -40,8 +40,11 @@ function createGearStore() {
 
   async function addItem(data: Omit<GearItem, 'id' | 'createdAt' | 'updatedAt'>) {
     const now = new Date().toISOString()
+    const settings = await getSettings()
     const item: GearItem = {
       ...data,
+      ownerId: data.ownerId ?? 'primary',
+      ownerName: data.ownerName ?? (settings?.displayName?.trim() || 'Me'),
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,

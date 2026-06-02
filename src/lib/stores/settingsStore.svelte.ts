@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hasSeenWelcome: false,
   theme: 'dark',
   demoModeLocked: false,
+  displayName: '',
 }
 
 function createSettingsStore() {
