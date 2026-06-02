@@ -250,8 +250,17 @@
   let dragCategories = $state<PackingListCategory[]>([])
   $effect(() => { dragCategories = [...localList.categories] })
 
+  let isDraggingCat = $state(false)
+  let preCollapseState = $state<Set<string>>(new Set())
+
   function handleCatConsider(e: CustomEvent<{ items: PackingListCategory[] }>) {
     dragCategories = e.detail.items
+    if (!isDraggingCat) {
+      isDraggingCat = true
+      preCollapseState = new Set(collapsedCategories)
+      // Collapse all categories during drag
+      collapsedCategories = new Set(localList.categories.map((c) => c.id))
+    }
   }
 
   function handleCatFinalize(e: CustomEvent<{ items: PackingListCategory[] }>) {
@@ -259,6 +268,9 @@
     dragCategories = reordered
     localList.categories = reordered
     save()
+    // Restore collapse state
+    isDraggingCat = false
+    collapsedCategories = preCollapseState
   }
 
   function transformDraggedElement(el: HTMLElement) {
@@ -782,36 +794,35 @@
 
                   <div class="flex-1 min-w-0">
                     {#if gear}
-                      <!-- Row 1: name + stepper -->
-                      <div class="flex items-center gap-2">
-                        <p class="flex-1 min-w-0 text-sm font-medium {item.checked && localList.isPackingMode ? 'line-through' : ''}">{gear.name}</p>
-                        <!-- Quantity stepper -->
-                        <div class="flex items-center gap-1 flex-shrink-0">
-                          <button
-                            onclick={() => changeQty(cat.id, item.id, -1)}
-                            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span class="text-sm font-medium w-5 text-center tabular-nums">{item.quantity}</span>
-                          <button
-                            onclick={() => changeQty(cat.id, item.id, 1)}
-                            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-                      </div>
-                      <!-- Row 2: brand · weight -->
+                      <p class="text-sm font-medium {item.checked && localList.isPackingMode ? 'line-through' : ''}">{gear.name}</p>
                       <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-                        {gear.brand || '—'}{gear ? ` · ${formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}` : ''}
+                        {gear.brand || '—'} · {formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}
                       </p>
                     {:else}
                       <p class="text-sm text-zinc-400 italic">Item not found</p>
                     {/if}
                   </div>
+
+                  {#if gear}
+                    <!-- Quantity stepper — at outer flex level so it's centered with trash -->
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onclick={() => changeQty(cat.id, item.id, -1)}
+                        class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <span class="text-sm font-medium w-5 text-center tabular-nums">{item.quantity}</span>
+                      <button
+                        onclick={() => changeQty(cat.id, item.id, 1)}
+                        class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                  {/if}
 
                   {#if deleteConfirmItemId === item.id}
                     <div class="flex items-center gap-1.5 ml-1">
