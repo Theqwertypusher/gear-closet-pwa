@@ -11,6 +11,9 @@
     Layers,
     Check,
     Backpack,
+    Users,
+    Copy,
+    CheckCheck,
   } from '@lucide/svelte'
   import { dndzone } from 'svelte-dnd-action'
   import { packingListStore } from '../lib/stores/packingListStore.svelte'
@@ -19,7 +22,8 @@
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
-  import type { PackingList, PackingListCategory, PackingListItem, ListMode } from '../lib/types'
+  import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
+  import { PACKER_COLORS } from '../lib/types'
 
   interface Props {
     list: PackingList
@@ -40,6 +44,71 @@
   let deleteConfirmCatId = $state<string | null>(null)
   let deleteConfirmItemId = $state<string | null>(null)
 
+  // Collaborate modal state
+  let showCollaborateModal = $state(false)
+  let linkCopied = $state(false)
+
+  function openCollaborateModal() { showCollaborateModal = true }
+  function closeCollaborateModal() { showCollaborateModal = false; linkCopied = false }
+
+  async function copySessionLink() {
+    // Placeholder — will be replaced with real PeerJS session link
+    const link = `${window.location.origin}?session=demo-${localList.id.slice(0, 6)}`
+    await navigator.clipboard.writeText(link)
+    linkCopied = true
+    setTimeout(() => { linkCopied = false }, 2000)
+  }
+
+  // Packer state
+  let addingPacker = $state(false)
+  let newPackerName = $state('')
+  let activePackerFilter = $state<string | null>(null)
+
+  const packers = $derived(localList.packers ?? [])
+
+  function addPacker() {
+    const name = newPackerName.trim()
+    if (!name) { addingPacker = false; newPackerName = ''; return }
+    const packer: Packer = {
+      id: crypto.randomUUID(),
+      name,
+      color: PACKER_COLORS[(localList.packers ?? []).length % PACKER_COLORS.length],
+    }
+    localList.packers = [...(localList.packers ?? []), packer]
+    save()
+    addingPacker = false
+    newPackerName = ''
+  }
+
+  function removePacker(packerId: string) {
+    localList.packers = (localList.packers ?? []).filter((p) => p.id !== packerId)
+    // clear assigneeId for items assigned to this packer
+    localList.categories = localList.categories.map((cat) => ({
+      ...cat,
+      items: cat.items.map((item) =>
+        item.assigneeId === packerId ? { ...item, assigneeId: undefined } : item
+      ),
+    }))
+    save()
+  }
+
+  function cycleAssignee(catId: string, itemId: string) {
+    const ps = localList.packers ?? []
+    localList.categories = localList.categories.map((cat) => {
+      if (cat.id !== catId) return cat
+      return {
+        ...cat,
+        items: cat.items.map((item) => {
+          if (item.id !== itemId) return item
+          const idx = ps.findIndex((p) => p.id === item.assigneeId)
+          const next = ps[(idx + 1) % (ps.length + 1)]
+          return { ...item, assigneeId: next?.id }
+        }),
+      }
+    })
+    save()
+  }
+
   // Item picker state
   let itemPickerCatId = $state<string | null>(null)
   let itemPickerSearch = $state('')
@@ -56,6 +125,22 @@
 
   const weights = $derived(computePackingListWeights(localList, gearItemsMap, unit))
 
+  // Weight breakdown by owner
+  const weightByOwner = $derived(() => {
+    const map = new Map<string, number>()
+    for (const cat of localList.categories) {
+      for (const item of cat.items) {
+        const gear = gearItemsMap.get(item.gearItemId)
+        if (!gear) continue
+        const owner = gear.ownerName || 'Unknown'
+        map.set(owner, (map.get(owner) ?? 0) + itemWeightIn(gear, unit) * item.quantity)
+      }
+    }
+    return map
+  })
+  const showWeightByOwner = $derived(weightByOwner().size > 1)
+  let weightByOwnerOpen = $state(false)
+
   function categoryWeight(cat: PackingListCategory): number {
     return computeItemsWeight(cat.items, gearItemsMap, unit)
   }
@@ -68,6 +153,7 @@
       tripNotes: localList.tripNotes,
       isPackingMode: localList.isPackingMode,
       listMode: localList.listMode,
+      packers: localList.packers,
     })
   }
 
@@ -94,6 +180,7 @@
   // Packing mode
   function togglePackingMode() {
     localList.isPackingMode = !localList.isPackingMode
+    if (!localList.isPackingMode) activePackerFilter = null
     save()
   }
 
@@ -582,6 +669,33 @@
     </div>
   </div>
 
+  <!-- Weight by owner accordion -->
+  {#if showWeightByOwner}
+    <div class="flex-shrink-0 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4">
+      <button
+        onclick={() => (weightByOwnerOpen = !weightByOwnerOpen)}
+        class="flex items-center justify-between w-full py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400"
+      >
+        <span>By owner</span>
+        {#if weightByOwnerOpen}
+          <ChevronUp size={14} />
+        {:else}
+          <ChevronDown size={14} />
+        {/if}
+      </button>
+      {#if weightByOwnerOpen}
+        <div class="pb-2 space-y-1">
+          {#each [...weightByOwner().entries()] as [owner, w]}
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-zinc-600 dark:text-zinc-400">{owner}</span>
+              <span class="tabular-nums text-zinc-700 dark:text-zinc-300">{formatWeight(w, unit)}</span>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+
   <!-- Packing mode clear button (Draft mode only) -->
   {#if localList.isPackingMode && (localList.listMode ?? 'draft') === 'draft'}
     <div class="px-4 pt-3">
@@ -591,6 +705,31 @@
       >
         Clear all checks
       </button>
+    </div>
+  {/if}
+
+  <!-- Packer filter tabs (packing mode) -->
+  {#if localList.isPackingMode && packers.length > 0}
+    <div class="flex-shrink-0 flex gap-1.5 px-4 py-2 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
+      <button
+        onclick={() => (activePackerFilter = null)}
+        class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors
+          {activePackerFilter === null
+            ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+      >All</button>
+      {#each packers as packer}
+        <button
+          onclick={() => (activePackerFilter = packer.id)}
+          class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors
+            {activePackerFilter === packer.id
+              ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}"
+        >
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {packer.color}"></span>
+          {packer.name}
+        </button>
+      {/each}
     </div>
   {/if}
 
@@ -715,6 +854,47 @@
         </button>
       </div>
 
+      <!-- Packer chips row (draft mode only) -->
+      {#if !localList.isPackingMode}
+        <div class="flex flex-wrap gap-2 pb-3">
+          {#each packers as packer}
+            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {packer.color}"></span>
+              {packer.name}
+              <button
+                onclick={() => removePacker(packer.id)}
+                class="ml-0.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 leading-none"
+                aria-label="Remove {packer.name}"
+              >×</button>
+            </span>
+          {/each}
+
+          {#if addingPacker}
+            <!-- svelte-ignore a11y_autofocus -->
+            <input
+              type="text"
+              bind:value={newPackerName}
+              placeholder="Packer name"
+              autofocus
+              class="px-2.5 py-1 rounded-full border border-dashed border-zinc-400 dark:border-zinc-500 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none w-32"
+              onkeydown={(e) => {
+                if (e.key === 'Enter') addPacker()
+                if (e.key === 'Escape') { addingPacker = false; newPackerName = '' }
+              }}
+              onblur={addPacker}
+            />
+          {:else if packers.length < 4}
+            <button
+              onclick={() => (addingPacker = true)}
+              class="flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-zinc-300 dark:border-zinc-600 text-xs font-medium text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-400 transition-colors"
+            >
+              <Plus size={10} />
+              Add Packer
+            </button>
+          {/if}
+        </div>
+      {/if}
+
       <!-- Trip notes expanded card — below inline row -->
       {#if showTripNotes}
         <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden mb-4">
@@ -804,7 +984,17 @@
             <div class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
               {#each cat.items as item (item.id)}
                 {@const gear = gearItemsMap.get(item.gearItemId)}
+                {#if !localList.isPackingMode || activePackerFilter === null || item.assigneeId === activePackerFilter}
                 <div class="flex items-center gap-3 px-4 py-3 {item.checked && localList.isPackingMode ? 'opacity-50' : ''}">
+                  {#if !localList.isPackingMode && packers.length > 0}
+                    {@const assignedPacker = packers.find((p) => p.id === item.assigneeId)}
+                    <button
+                      onclick={() => cycleAssignee(cat.id, item.id)}
+                      class="flex-shrink-0 w-3.5 h-3.5 rounded-full cursor-pointer border border-zinc-300 dark:border-zinc-600 transition-colors"
+                      style={assignedPacker ? `background-color: ${assignedPacker.color}; border-color: ${assignedPacker.color}` : ''}
+                      aria-label="Assign packer"
+                    ></button>
+                  {/if}
                   {#if localList.isPackingMode}
                     <button
                       onclick={() => toggleChecked(cat.id, item.id)}
@@ -879,6 +1069,7 @@
                     </button>
                   {/if}
                 </div>
+                {/if}
               {/each}
 
               <!-- Add item / kit / delete -->
