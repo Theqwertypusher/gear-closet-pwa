@@ -250,27 +250,42 @@
   let dragCategories = $state<PackingListCategory[]>([])
   $effect(() => { dragCategories = [...localList.categories] })
 
-  let isDraggingCat = $state(false)
+  // Collapse-on-drag state
+  let isDragging = $state(false)
   let preCollapseState = $state<Set<string>>(new Set())
+
+  function handleDragHandlePointerDown() {
+    // Save which categories were already collapsed, then collapse all
+    preCollapseState = new Set(collapsedCategories)
+    collapsedCategories = new Set(localList.categories.map((c) => c.id))
+    isDragging = true
+
+    // If the user lifts without actually dragging, restore via pointerup.
+    // setTimeout(0) lets svelte-dnd-action's finalize handler run first if a
+    // real drag completed — finalize sets isDragging = false, so we skip restore.
+    function onPointerUp() {
+      setTimeout(() => {
+        if (isDragging) {
+          collapsedCategories = preCollapseState
+          isDragging = false
+        }
+      }, 0)
+    }
+    document.addEventListener('pointerup', onPointerUp, { once: true })
+  }
 
   function handleCatConsider(e: CustomEvent<{ items: PackingListCategory[] }>) {
     dragCategories = e.detail.items
-    if (!isDraggingCat) {
-      isDraggingCat = true
-      preCollapseState = new Set(collapsedCategories)
-      // Collapse all categories during drag
-      collapsedCategories = new Set(localList.categories.map((c) => c.id))
-    }
   }
 
   function handleCatFinalize(e: CustomEvent<{ items: PackingListCategory[] }>) {
     const reordered = e.detail.items.map((c, i) => ({ ...c, sortOrder: i }))
     dragCategories = reordered
     localList.categories = reordered
-    save()
-    // Restore collapse state
-    isDraggingCat = false
+    // Restore collapsed state from before drag started
     collapsedCategories = preCollapseState
+    isDragging = false
+    save()
   }
 
   function transformDraggedElement(el: HTMLElement) {
@@ -728,7 +743,10 @@
           <!-- Category header -->
           <div class="flex items-center gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-900">
             <!-- Drag handle -->
-            <div class="cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-600 touch-none select-none flex-shrink-0">
+            <div
+              onpointerdown={handleDragHandlePointerDown}
+              class="cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-600 touch-none select-none flex-shrink-0"
+            >
               <svg width="14" height="20" viewBox="0 0 16 24" fill="currentColor">
                 <circle cx="5" cy="6" r="1.5"/><circle cx="11" cy="6" r="1.5"/>
                 <circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
