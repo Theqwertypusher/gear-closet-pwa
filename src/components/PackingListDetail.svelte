@@ -250,28 +250,22 @@
   let dragCategories = $state<PackingListCategory[]>([])
   $effect(() => { dragCategories = [...localList.categories] })
 
-  // Collapse-on-drag state
-  let isDragging = $state(false)
-  let preCollapseState = $state<Set<string>>(new Set())
+  // Reorder mode
+  let reorderMode = $state(false)
+  let preReorderCollapsed = $state<Set<string>>(new Set())
 
-  function handleDragHandlePointerDown() {
-    // Save which categories were already collapsed, then collapse all
-    preCollapseState = new Set(collapsedCategories)
-    collapsedCategories = new Set(localList.categories.map((c) => c.id))
-    isDragging = true
-
-    // If the user lifts without actually dragging, restore via pointerup.
-    // setTimeout(0) lets svelte-dnd-action's finalize handler run first if a
-    // real drag completed — finalize sets isDragging = false, so we skip restore.
-    function onPointerUp() {
-      setTimeout(() => {
-        if (isDragging) {
-          collapsedCategories = preCollapseState
-          isDragging = false
-        }
-      }, 0)
+  function toggleReorderMode() {
+    if (reorderMode) {
+      // Exit: restore collapsed state
+      collapsedCategories = preReorderCollapsed
+      reorderMode = false
+    } else {
+      // Enter: save collapsed state, collapse all, close notes
+      preReorderCollapsed = new Set(collapsedCategories)
+      collapsedCategories = new Set(localList.categories.map((c) => c.id))
+      showTripNotes = false
+      reorderMode = true
     }
-    document.addEventListener('pointerup', onPointerUp, { once: true })
   }
 
   function handleCatConsider(e: CustomEvent<{ items: PackingListCategory[] }>) {
@@ -282,9 +276,6 @@
     const reordered = e.detail.items.map((c, i) => ({ ...c, sortOrder: i }))
     dragCategories = reordered
     localList.categories = reordered
-    // Restore collapsed state from before drag started
-    collapsedCategories = preCollapseState
-    isDragging = false
     save()
   }
 
@@ -681,31 +672,46 @@
     <div class="px-4 pt-4 space-y-4">
       <!-- Trip notes + Add category inline -->
       <div class="flex gap-3">
-        <!-- Trip Notes — 1/3 width -->
-        <div class="flex-[1] rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <!-- Add Category — primary -->
+          <button
+            onclick={addCategory}
+            disabled={reorderMode}
+            class="flex-[2] py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors
+              {reorderMode
+                ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300'}"
+          >
+            <Plus size={16} />
+            Add Category
+          </button>
+
+          <!-- Notes — secondary -->
           <button
             onclick={() => (showTripNotes = !showTripNotes)}
-            class="flex items-center justify-between w-full px-3 py-3 bg-zinc-50 dark:bg-zinc-900 text-sm font-semibold h-full"
+            disabled={reorderMode}
+            class="flex-[1] rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-3 py-3 text-sm font-semibold transition-colors
+              {reorderMode
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+                : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'}"
           >
             <span>Notes</span>
             {#if showTripNotes}
-              <ChevronUp size={18} class="text-zinc-400" />
+              <ChevronUp size={18} class="flex-shrink-0 ml-2" />
             {:else}
-              <ChevronDown size={18} class="text-zinc-400" />
+              <ChevronDown size={18} class="flex-shrink-0 ml-2" />
             {/if}
           </button>
-        </div>
 
-        <!-- Add Category — 2/3 width -->
+        <!-- Reorder — tertiary (always visible) -->
         <button
-          onclick={addCategory}
-          class="flex-[2] py-3 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700
-            text-sm font-medium text-zinc-400 dark:text-zinc-500
-            hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300
-            transition-colors flex items-center justify-center gap-2"
+          onclick={toggleReorderMode}
+          class="rounded-xl border px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors
+            {reorderMode
+              ? 'border-indigo-400 dark:border-indigo-600 text-zinc-700 dark:text-zinc-300 bg-transparent'
+              : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 bg-transparent hover:border-zinc-300 dark:hover:border-zinc-600'}"
+          aria-label={reorderMode ? 'Exit reorder mode' : 'Reorder categories'}
         >
-          <Plus size={16} />
-          Add Category
+          Reorder
         </button>
       </div>
 
@@ -728,7 +734,7 @@
       <div class="border-t border-zinc-200 dark:border-zinc-800"></div>
 
       <div
-        use:dndzone={{ items: dragCategories, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {} }}
+        use:dndzone={{ items: dragCategories, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {}, dragDisabled: !reorderMode }}
         onconsider={handleCatConsider}
         onfinalize={handleCatFinalize}
         class="space-y-3"
@@ -736,34 +742,38 @@
       {#each dragCategories as cat (cat.id)}
         {@const collapsed = collapsedCategories.has(cat.id)}
         <div class={(cat as any).isDndShadowItem ? 'rounded-xl outline outline-2 outline-indigo-500 outline-offset-2 opacity-40' : ''}>
-        <div class="rounded-xl border overflow-hidden transition-colors
-          {cat.id === newCatId
-            ? 'border-zinc-400 dark:border-zinc-500 animate-cat-pop'
-            : 'border-zinc-200 dark:border-zinc-800'}">
+        <div
+          class="rounded-xl border overflow-hidden transition-colors
+            {cat.id === newCatId
+              ? 'border-zinc-400 dark:border-zinc-500 animate-cat-pop'
+              : 'border-zinc-200 dark:border-zinc-800'}"
+        >
           <!-- Category header -->
           <div class="flex items-center gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-900">
-            <!-- Drag handle -->
-            <div
-              onpointerdown={handleDragHandlePointerDown}
-              class="cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-600 touch-none select-none flex-shrink-0"
-            >
-              <svg width="14" height="20" viewBox="0 0 16 24" fill="currentColor">
-                <circle cx="5" cy="6" r="1.5"/><circle cx="11" cy="6" r="1.5"/>
-                <circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
-                <circle cx="5" cy="18" r="1.5"/><circle cx="11" cy="18" r="1.5"/>
-              </svg>
-            </div>
-            <button
-              onclick={() => toggleCollapse(cat.id)}
-              class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-              aria-label={collapsed ? 'Expand' : 'Collapse'}
-            >
-              {#if collapsed}
-                <ChevronDown size={18} />
-              {:else}
-                <ChevronUp size={18} />
-              {/if}
-            </button>
+            <!-- Drag handle — only visible in reorder mode -->
+            {#if reorderMode}
+              <div class="cursor-grab active:cursor-grabbing text-indigo-400 dark:text-indigo-500 touch-none select-none flex-shrink-0">
+                <svg width="14" height="20" viewBox="0 0 16 24" fill="currentColor">
+                  <circle cx="5" cy="6" r="1.5"/><circle cx="11" cy="6" r="1.5"/>
+                  <circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
+                  <circle cx="5" cy="18" r="1.5"/><circle cx="11" cy="18" r="1.5"/>
+                </svg>
+              </div>
+            {/if}
+            <!-- Collapse chevron — hidden in reorder mode -->
+            {#if !reorderMode}
+              <button
+                onclick={() => toggleCollapse(cat.id)}
+                class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                aria-label={collapsed ? 'Expand' : 'Collapse'}
+              >
+                {#if collapsed}
+                  <ChevronDown size={18} />
+                {:else}
+                  <ChevronUp size={18} />
+                {/if}
+              </button>
+            {/if}
 
             {#if editingCategoryId === cat.id}
               <!-- svelte-ignore a11y_autofocus -->
