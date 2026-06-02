@@ -20,6 +20,7 @@
   import { gearStore } from '../lib/stores/gearStore.svelte'
   import { kitStore } from '../lib/stores/kitStore.svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
+  import { sessionStore } from '../lib/stores/sessionStore.svelte'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
@@ -51,10 +52,44 @@
   function openCollaborateModal() { showCollaborateModal = true }
   function closeCollaborateModal() { showCollaborateModal = false; linkCopied = false }
 
+  // Toast state
+  let toastMessage = $state<string | null>(null)
+  let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+  function showToast(msg: string) {
+    toastMessage = msg
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => { toastMessage = null }, 3000)
+  }
+
+  // Session event listeners
+  $effect(() => {
+    function onGuestJoined(e: Event) { showToast(`${(e as CustomEvent).detail?.name ?? 'Someone'} joined`) }
+    function onGuestLeft(e: Event) { showToast(`${(e as CustomEvent).detail?.name ?? 'Someone'} left`) }
+    function onSessionEnded() { showToast('Session ended') }
+    function onReconnectFailed() { showToast('Could not reconnect. Session ended.') }
+    document.addEventListener('session:guest-joined', onGuestJoined)
+    document.addEventListener('session:guest-left', onGuestLeft)
+    document.addEventListener('session:ended', onSessionEnded)
+    document.addEventListener('session:reconnect-failed', onReconnectFailed)
+    return () => {
+      document.removeEventListener('session:guest-joined', onGuestJoined)
+      document.removeEventListener('session:guest-left', onGuestLeft)
+      document.removeEventListener('session:ended', onSessionEnded)
+      document.removeEventListener('session:reconnect-failed', onReconnectFailed)
+    }
+  })
+
   async function copySessionLink() {
-    // Placeholder — will be replaced with real PeerJS session link
-    const link = `${window.location.origin}?session=demo-${localList.id.slice(0, 6)}`
-    await navigator.clipboard.writeText(link)
+    const url = await sessionStore.startSession(localList.id)
+    await navigator.clipboard.writeText(url)
+    linkCopied = true
+    setTimeout(() => { linkCopied = false }, 2000)
+  }
+
+  async function inviteMore() {
+    const url = `${window.location.origin}/?session=${sessionStore.peerId}`
+    await navigator.clipboard.writeText(url)
     linkCopied = true
     setTimeout(() => { linkCopied = false }, 2000)
   }
@@ -583,6 +618,21 @@
         </button>
       {/if}
 
+      <!-- People / collaborate icon -->
+      <button
+        onclick={openCollaborateModal}
+        class="relative p-1 rounded-lg transition-colors flex-shrink-0
+          {sessionStore.status === 'hosting' || sessionStore.status === 'joined'
+            ? 'text-green-500'
+            : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'}"
+        aria-label="Collaborate"
+      >
+        <Users size={20} />
+        {#if sessionStore.status === 'hosting' || sessionStore.status === 'joined'}
+          <span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        {/if}
+      </button>
+
       <!-- Mode pills — inline on sm+ only -->
       <div class="hidden sm:flex items-center gap-1.5 flex-shrink-0">
         <button
@@ -640,6 +690,30 @@
       </button>
     </div>
   </header>
+
+  <!-- Collaboration banner -->
+  {#if sessionStore.status === 'hosting'}
+    <div class="flex-shrink-0 bg-green-50 dark:bg-green-950 border-b border-green-200 dark:border-green-800 px-4 h-10 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0"></span>
+        <span>Live · Host · {sessionStore.guests.length} guest{sessionStore.guests.length !== 1 ? 's' : ''}</span>
+      </div>
+      <button onclick={() => sessionStore.endSession()} class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-300 transition-colors">End Session</button>
+    </div>
+  {:else if sessionStore.status === 'joined'}
+    <div class="flex-shrink-0 bg-green-50 dark:bg-green-950 border-b border-green-200 dark:border-green-800 px-4 h-10 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0"></span>
+        <span>Live · Guest{sessionStore.hostName ? ` · ${sessionStore.hostName}'s session` : ''}</span>
+      </div>
+      <button onclick={() => sessionStore.leaveSession()} class="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">Leave</button>
+    </div>
+  {:else if sessionStore.status === 'disconnected'}
+    <div class="flex-shrink-0 bg-amber-50 dark:bg-amber-950 border-b border-amber-200 dark:border-amber-800 px-4 h-10 flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+      <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0"></span>
+      <span>Reconnecting…</span>
+    </div>
+  {/if}
 
   <!-- Weight summary bar -->
   <div class="flex-shrink-0 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
@@ -1289,6 +1363,79 @@
         </div>
       {/if}
     </div>
+  </div>
+{/if}
+
+<!-- Collaborate modal -->
+{#if showCollaborateModal}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+    onclick={(e) => { if (e.target === e.currentTarget) closeCollaborateModal() }}
+  >
+    <div class="w-full sm:max-w-sm bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl px-6 py-6 flex flex-col gap-4">
+      {#if sessionStore.status === 'idle'}
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Collaborate</h2>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">Invite others to pack with you in real time. You'll be the host.</p>
+        <button
+          onclick={copySessionLink}
+          class="w-full py-3 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-semibold hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+        >
+          {linkCopied ? 'Copied ✓' : 'Copy Link'}
+        </button>
+        {#if typeof navigator !== 'undefined' && 'share' in navigator}
+          <button
+            onclick={async () => {
+              const url = await sessionStore.startSession(localList.id)
+              navigator.share({ title: localList.name, url })
+            }}
+            class="w-full py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            Share…
+          </button>
+        {/if}
+      {:else if sessionStore.status === 'hosting'}
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Live Session</h2>
+        {#if sessionStore.guests.length === 0}
+          <p class="text-sm text-zinc-400 dark:text-zinc-500">No guests yet. Share the link to invite someone.</p>
+        {:else}
+          <div class="space-y-1">
+            {#each sessionStore.guests as guest}
+              <div class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                <span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                {guest.displayName}
+              </div>
+            {/each}
+          </div>
+        {/if}
+        <button
+          onclick={inviteMore}
+          class="w-full py-3 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-semibold hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+        >
+          {linkCopied ? 'Copied ✓' : 'Invite More'}
+        </button>
+        <button
+          onclick={() => { sessionStore.endSession(); closeCollaborateModal() }}
+          class="w-full py-3 rounded-xl border border-red-300 dark:border-red-700 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+        >
+          End Session
+        </button>
+      {/if}
+      <button
+        onclick={closeCollaborateModal}
+        class="text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors text-center"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+{/if}
+
+<!-- Toast -->
+{#if toastMessage}
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] rounded-xl bg-zinc-900 text-white px-4 py-2 text-sm shadow-lg pointer-events-none">
+    {toastMessage}
   </div>
 {/if}
 
