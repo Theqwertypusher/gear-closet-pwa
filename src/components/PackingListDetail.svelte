@@ -35,7 +35,8 @@
   let { list, onback, onGoToGear }: Props = $props()
 
   // Local mutable copy
-  let localList = $state<PackingList>(structuredClone($state.snapshot(list)))
+  // eslint-disable-next-line svelte/reactivity
+  let localList = $state<PackingList>(JSON.parse(JSON.stringify(list)))
 
   // UI state
   let editingName = $state(false)

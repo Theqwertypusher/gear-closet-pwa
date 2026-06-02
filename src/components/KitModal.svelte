@@ -15,13 +15,9 @@
 
   let { kit = null, gearItems, weightUnit, onSave, onClose }: Props = $props()
 
-  const initialName = kit?.name ?? ''
-  const initialDesc = kit?.description ?? ''
-  const initialIds = kit?.itemIds ?? []
-
-  let name = $state(initialName)
-  let description = $state(initialDesc)
-  let selectedIds = $state(new Set<string>(initialIds))
+  let name = $state(kit?.name ?? '')
+  let description = $state(kit?.description ?? '')
+  let selectedIds = $state(new Set<string>(kit?.itemIds ?? []))
 
   let errors = $state<{ name?: string; items?: string }>({})
 
