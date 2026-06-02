@@ -471,7 +471,7 @@
 
 <div class="fixed inset-0 z-40 flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
   <!-- Header -->
-  <header class="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+  <header class="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex-shrink-0">
     <!-- Row 1: back + title + pills (pills inline on sm+, hidden on mobile) -->
     <div class="flex items-center gap-3">
       <button onclick={onback} class="p-1 -ml-1 rounded-lg text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors" aria-label="Back">
@@ -554,8 +554,8 @@
     </div>
   </header>
 
-  <!-- Weight summary bar (sticky below header) -->
-  <div class="sticky top-[93px] sm:top-[57px] z-10 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+  <!-- Weight summary bar -->
+  <div class="flex-shrink-0 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
     <div class="flex items-center">
       <!-- Base / Wearable / Consumable — evenly spaced by content -->
       <div class="flex flex-1 justify-evenly">
@@ -669,9 +669,9 @@
     <!-- ═══════════════════════════════════════════════════════════ -->
     <!-- DRAFT VIEW — original bordered card layout                 -->
     <!-- ═══════════════════════════════════════════════════════════ -->
-    <div class="px-4 pt-4 space-y-4">
+    <div class="px-4">
       <!-- Trip notes + Add category inline -->
-      <div class="flex gap-3">
+      <div class="flex gap-3 py-4">
           <!-- Add Category — primary -->
           <button
             onclick={addCategory}
@@ -708,7 +708,7 @@
           class="rounded-xl border px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors
             {reorderMode
               ? 'border-indigo-400 dark:border-indigo-600 text-zinc-700 dark:text-zinc-300 bg-transparent'
-              : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 bg-transparent hover:border-zinc-300 dark:hover:border-zinc-600'}"
+              : 'border-transparent text-zinc-500 dark:text-zinc-400 bg-transparent'}"
           aria-label={reorderMode ? 'Exit reorder mode' : 'Reorder categories'}
         >
           Reorder
@@ -717,7 +717,7 @@
 
       <!-- Trip notes expanded card — below inline row -->
       {#if showTripNotes}
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden mb-4">
           <div class="px-4 py-3">
             <textarea
               bind:value={localList.tripNotes}
@@ -730,11 +730,8 @@
         </div>
       {/if}
 
-      <!-- Divider -->
-      <div class="border-t border-zinc-200 dark:border-zinc-800"></div>
-
       <div
-        use:dndzone={{ items: dragCategories, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {}, dragDisabled: !reorderMode }}
+        use:dndzone={{ items: dragCategories, flipDurationMs: 200, transformDraggedElement, dropTargetStyle: {}, centreDraggedOnCursor: true }}
         onconsider={handleCatConsider}
         onfinalize={handleCatFinalize}
         class="space-y-3"
@@ -744,12 +741,13 @@
         <div class={(cat as any).isDndShadowItem ? 'rounded-xl outline outline-2 outline-indigo-500 outline-offset-2 opacity-40' : ''}>
         <div
           class="rounded-xl border overflow-hidden transition-colors
+            {reorderMode ? 'touch-none select-none cursor-grab active:cursor-grabbing' : ''}
             {cat.id === newCatId
               ? 'border-zinc-400 dark:border-zinc-500 animate-cat-pop'
               : 'border-zinc-200 dark:border-zinc-800'}"
         >
           <!-- Category header -->
-          <div class="flex items-center gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-900">
+          <div class="flex items-center gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 {reorderMode ? 'cursor-grab active:cursor-grabbing' : ''}">
             <!-- Drag handle — only visible in reorder mode -->
             {#if reorderMode}
               <div class="cursor-grab active:cursor-grabbing text-indigo-400 dark:text-indigo-500 touch-none select-none flex-shrink-0">
@@ -775,7 +773,7 @@
               </button>
             {/if}
 
-            {#if editingCategoryId === cat.id}
+            {#if editingCategoryId === cat.id && !reorderMode}
               <!-- svelte-ignore a11y_autofocus -->
               <input
                 class="flex-1 font-semibold bg-transparent border-b border-zinc-400 focus:outline-none text-sm"
@@ -784,6 +782,8 @@
                 onblur={(e) => commitCategoryName(cat.id, e)}
                 onkeydown={(e) => catNameKeydown(cat.id, e)}
               />
+            {:else if reorderMode}
+              <span class="flex-1 font-semibold text-sm select-none">{cat.name}</span>
             {:else}
               <button
                 onclick={() => startEditCategory(cat.id)}
