@@ -782,36 +782,35 @@
 
                   <div class="flex-1 min-w-0">
                     {#if gear}
-                      <p class="text-sm font-medium truncate {item.checked && localList.isPackingMode ? 'line-through' : ''}">{gear.name}</p>
-                      <p class="text-xs text-zinc-400 dark:text-zinc-500 truncate">{gear.brand || '—'}</p>
+                      <!-- Row 1: name + stepper -->
+                      <div class="flex items-center gap-2">
+                        <p class="flex-1 min-w-0 text-sm font-medium {item.checked && localList.isPackingMode ? 'line-through' : ''}">{gear.name}</p>
+                        <!-- Quantity stepper -->
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onclick={() => changeQty(cat.id, item.id, -1)}
+                            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span class="text-sm font-medium w-5 text-center tabular-nums">{item.quantity}</span>
+                          <button
+                            onclick={() => changeQty(cat.id, item.id, 1)}
+                            class="w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      <!-- Row 2: brand · weight -->
+                      <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+                        {gear.brand || '—'}{gear ? ` · ${formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}` : ''}
+                      </p>
                     {:else}
                       <p class="text-sm text-zinc-400 italic">Item not found</p>
                     {/if}
-                  </div>
-
-                  {#if gear}
-                    <span class="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums w-16 text-right">
-                      {formatWeight(itemWeightIn(gear, unit) * item.quantity, unit)}
-                    </span>
-                  {/if}
-
-                  <!-- Quantity stepper -->
-                  <div class="flex items-center gap-1">
-                    <button
-                      onclick={() => changeQty(cat.id, item.id, -1)}
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span class="text-sm font-medium w-5 text-center tabular-nums">{item.quantity}</span>
-                    <button
-                      onclick={() => changeQty(cat.id, item.id, 1)}
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                      aria-label="Increase quantity"
-                    >
-                      <Plus size={14} />
-                    </button>
                   </div>
 
                   {#if deleteConfirmItemId === item.id}

@@ -125,6 +125,9 @@
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ]
 
+  // Hide main header/banners when a packing list detail is open (it has its own full-screen header)
+  const listDetailOpen = $derived(activeTab === 'packing-lists' && !!packingListStore.activeListId)
+
   // Show legacy "import" welcome banner only when: no tutorial, no hasSeenWelcome, stores empty
   let showWelcomeBanner = $derived(
     !bannerDismissed &&
@@ -330,6 +333,7 @@
   <WelcomeScreen onDone={onWelcomeDone} onStartTour={() => { showTour = true }} />
 {:else}
   <div class="flex flex-col min-h-svh bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    {#if !listDetailOpen}
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between">
       <h1 class="flex items-center gap-2">
@@ -405,6 +409,7 @@
         <p class="text-xs text-green-700 dark:text-green-300 font-medium">Saved to your gear!</p>
       </div>
     {/if}
+    {/if}
 
 
     <!-- Main content area -->
@@ -421,6 +426,7 @@
     </main>
 
     <!-- Bottom nav -->
+    {#if !listDetailOpen}
     <nav class="sticky bottom-0 z-30 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800" style="padding-bottom: env(safe-area-inset-bottom);">
       <ul class="flex" style="padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);">
         {#each tabs as tab}
@@ -440,5 +446,6 @@
         {/each}
       </ul>
     </nav>
+    {/if}
   </div>
 {/if}
