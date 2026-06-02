@@ -371,7 +371,13 @@
         onclick={() => {
           activeTab = 'settings'
           setTimeout(() => {
-            document.querySelector('[data-demo-mode-section]')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            const target = document.querySelector('[data-demo-mode-section]') as HTMLElement | null
+            const header = document.querySelector('header') as HTMLElement | null
+            if (target) {
+              const headerHeight = header?.offsetHeight ?? 0
+              const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 12
+              window.scrollTo({ top, behavior: 'smooth' })
+            }
           }, 50)
         }}
         class="w-full flex items-center justify-center gap-2 px-4 py-2 border-b border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 text-sm"
