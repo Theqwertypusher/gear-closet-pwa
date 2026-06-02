@@ -23,7 +23,7 @@ interface Message {
   timestamp: number
 }
 
-type MutationKind = 'CHECK_ITEM' | 'ADD_GEAR'
+type MutationKind = 'CHECK_ITEM' | 'ADD_GEAR' | 'DELETE_ITEM' | 'DELETE_CATEGORY'
 
 interface CheckItemMutation {
   kind: 'CHECK_ITEM'
@@ -39,7 +39,18 @@ interface AddGearMutation {
   packingItem: PackingListItem
 }
 
-type Mutation = CheckItemMutation | AddGearMutation
+interface DeleteItemMutation {
+  kind: 'DELETE_ITEM'
+  catId: string
+  itemId: string
+}
+
+interface DeleteCategoryMutation {
+  kind: 'DELETE_CATEGORY'
+  catId: string
+}
+
+type Mutation = CheckItemMutation | AddGearMutation | DeleteItemMutation | DeleteCategoryMutation
 
 interface GuestInfo {
   peerId: string
@@ -93,6 +104,17 @@ function createSessionStore() {
             },
       )
       packingListStore.updateList(list.id, { categories: updatedCats })
+    } else if (mutation.kind === 'DELETE_ITEM') {
+      const list = packingListStore.lists.find((l) => l.id === listId)
+      if (!list) return
+      const updatedCats = list.categories.map((c) =>
+        c.id !== mutation.catId ? c : { ...c, items: c.items.filter((i) => i.id !== mutation.itemId) }
+      )
+      packingListStore.updateList(list.id, { categories: updatedCats })
+    } else if (mutation.kind === 'DELETE_CATEGORY') {
+      const list = packingListStore.lists.find((l) => l.id === listId)
+      if (!list) return
+      packingListStore.updateList(list.id, { categories: list.categories.filter((c) => c.id !== mutation.catId) })
     } else if (mutation.kind === 'ADD_GEAR') {
       // Dedup check: name + brand + ownerId
       const key = (
@@ -270,7 +292,7 @@ function createSessionStore() {
   }
 
   function sendMutation(mutation: Mutation) {
-    const allowed: MutationKind[] = ['CHECK_ITEM', 'ADD_GEAR']
+    const allowed: MutationKind[] = ['CHECK_ITEM', 'ADD_GEAR', 'DELETE_ITEM']
 
     if (role === 'guest') {
       if (!allowed.includes(mutation.kind)) return // silently drop
