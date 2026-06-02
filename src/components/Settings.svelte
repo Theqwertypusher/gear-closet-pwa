@@ -217,6 +217,31 @@
     </div>
   </section>
 
+  <!-- Profile -->
+  <section>
+    <div class="flex items-center gap-2 mb-1">
+      <Info size={14} class="text-zinc-400" />
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+        Profile
+      </h2>
+    </div>
+    <div class="border-t border-zinc-200 dark:border-zinc-800 mb-4"></div>
+
+    <div>
+      <label for="display-name" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Display Name</label>
+      <input
+        id="display-name"
+        type="text"
+        value={settingsStore.settings.displayName ?? ''}
+        onblur={(e) => settingsStore.update({ displayName: (e.currentTarget as HTMLInputElement).value.trim() })}
+        onkeydown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur() }}
+        placeholder="Your name"
+        class="w-full px-3 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500"
+      />
+      <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Used to identify your gear when collaborating</p>
+    </div>
+  </section>
+
   <!-- Appearance -->
   <section>
     <div class="flex items-center gap-2 mb-1">

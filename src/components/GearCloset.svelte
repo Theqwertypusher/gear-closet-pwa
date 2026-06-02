@@ -13,6 +13,7 @@
 
   let activeFilter = $state<FilterTab>('all')
   let activeTag = $state<string | null>(null)
+  let activeOwner = $state<string | null>(null) // null = All, 'primary' = Me, ownerName string = partner
   let sortField = $state<SortField>('name')
   let sortDir = $state<SortDir>('asc')
   let showModal = $state(false)
@@ -47,12 +48,35 @@
     })
   }
 
+  const ownerFilteredItems = $derived(
+    activeOwner === null
+      ? gearStore.items
+      : activeOwner === 'primary'
+        ? gearStore.items.filter((i) => !i.ownerId || i.ownerId === 'primary')
+        : gearStore.items.filter((i) => i.ownerId !== 'primary' && i.ownerName === activeOwner)
+  )
+
+  const hasMultipleOwners = $derived(gearStore.items.some((i) => i.ownerId && i.ownerId !== 'primary'))
+
+  const uniquePartnerOwners = $derived(
+    [...new Map(
+      gearStore.items
+        .filter((i) => i.ownerId && i.ownerId !== 'primary' && i.ownerName)
+        .map((i) => [i.ownerName, i.ownerName])
+    ).values()]
+  )
+
+  function filteredByCategory(items: typeof gearStore.items, filter: FilterTab) {
+    if (filter === 'all') return items
+    return items.filter((i) => i.weightCategory === filter)
+  }
+
   const tagFilteredItems = $derived(
     activeTag === '__no_label__'
-      ? gearStore.filteredItems(activeFilter).filter((i) => !i.itemType || i.itemType.trim() === '')
+      ? filteredByCategory(ownerFilteredItems, activeFilter).filter((i) => !i.itemType || i.itemType.trim() === '')
       : activeTag
-        ? gearStore.filteredItems(activeFilter).filter((i) => i.itemType === activeTag)
-        : gearStore.filteredItems(activeFilter)
+        ? filteredByCategory(ownerFilteredItems, activeFilter).filter((i) => i.itemType === activeTag)
+        : filteredByCategory(ownerFilteredItems, activeFilter)
   )
   let displayedItems = $derived(sortItems(tagFilteredItems))
 
@@ -150,6 +174,40 @@
 <div class="relative flex flex-col h-full">
   <!-- Sticky header: filter tabs + sort + tag pills -->
   <div class="sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
+    <!-- Owner filter tabs (only when multiple owners) -->
+    {#if hasMultipleOwners}
+      <div class="flex gap-1 overflow-x-auto scrollbar-none px-4 pt-3 pb-1">
+        <button
+          onclick={() => { activeOwner = null }}
+          class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+            {activeOwner === null
+              ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+        >
+          All
+        </button>
+        <button
+          onclick={() => { activeOwner = 'primary' }}
+          class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+            {activeOwner === 'primary'
+              ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+        >
+          {settingsStore.settings.displayName || 'Me'}
+        </button>
+        {#each uniquePartnerOwners as ownerName}
+          <button
+            onclick={() => { activeOwner = ownerName }}
+            class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+              {activeOwner === ownerName
+                ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+          >
+            {ownerName}
+          </button>
+        {/each}
+      </div>
+    {/if}
     <!-- Filter tabs + sort controls -->
     <div class="flex items-center gap-1 px-4 pt-4 pb-2">
       <div class="flex gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0">
