@@ -264,6 +264,7 @@
     localList.categories = localList.categories.filter((c) => c.id !== catId)
     deleteConfirmCatId = null
     save()
+    sessionStore.sendMutation({ kind: 'DELETE_CATEGORY', catId })
   }
 
   // Delete item (with confirm)
@@ -440,6 +441,7 @@
       }
     })
     save()
+    sessionStore.sendMutation({ kind: 'CHECK_ITEM', catId, itemId, checked: nowChecked })
     track(nowChecked ? 'packing_item_checked' : 'packing_item_unchecked')
   }
 
@@ -450,6 +452,7 @@
       return { ...cat, items: cat.items.filter((i) => i.id !== itemId) }
     })
     save()
+    sessionStore.sendMutation({ kind: 'DELETE_ITEM', catId, itemId })
   }
 
   // Item picker
