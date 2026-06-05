@@ -21,6 +21,7 @@
   import { kitStore } from '../lib/stores/kitStore.svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { sessionStore } from '../lib/stores/sessionStore.svelte'
+  import { flags } from '../lib/featureFlags'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
@@ -623,6 +624,7 @@
       {/if}
 
       <!-- People / collaborate icon -->
+      {#if flags.collaborateMode}
       <button
         onclick={openCollaborateModal}
         class="relative p-1 rounded-lg transition-colors flex-shrink-0
@@ -636,6 +638,7 @@
           <span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
         {/if}
       </button>
+      {/if}
 
       <!-- Mode pills — inline on sm+ only -->
       <div class="hidden sm:flex items-center gap-1.5 flex-shrink-0">
@@ -696,7 +699,7 @@
   </header>
 
   <!-- Collaboration banner -->
-  {#if sessionStore.status === 'hosting'}
+  {#if flags.collaborateMode && sessionStore.status === 'hosting'}
     <div class="flex-shrink-0 bg-green-50 dark:bg-green-950 border-b border-green-200 dark:border-green-800 px-4 h-10 flex items-center justify-between">
       <div class="flex items-center gap-2 text-sm text-green-800 dark:text-green-200">
         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0"></span>

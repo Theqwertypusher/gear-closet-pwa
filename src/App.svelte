@@ -26,6 +26,7 @@
     setPackingListStoreTutorialMode,
   } from './lib/stores/packingListStore.svelte'
   import { track } from './lib/analytics'
+  import { flags } from './lib/featureFlags'
 
   type Tab = 'gear' | 'kits' | 'packing-lists' | 'settings'
 
@@ -63,12 +64,14 @@
     }
 
     // Session join link (?session=<hostPeerId>)
-    const sessionParam = new URLSearchParams(window.location.search).get('session')
-    if (sessionParam) {
-      window.history.replaceState({}, '', window.location.pathname)
-      activeTab = 'packing-lists'
-      sessionStore.joinSession(sessionParam, settingsStore.settings.displayName || 'Me')
-      return
+    if (flags.collaborateMode) {
+      const sessionParam = new URLSearchParams(window.location.search).get('session')
+      if (sessionParam) {
+        window.history.replaceState({}, '', window.location.pathname)
+        activeTab = 'packing-lists'
+        sessionStore.joinSession(sessionParam, settingsStore.settings.displayName || 'Me')
+        return
+      }
     }
 
     // No share link — load tutorial/demo data if enabled
