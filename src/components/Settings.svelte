@@ -11,6 +11,7 @@
   import { buildShareUrl } from '../lib/share'
   import ShareModal from './ShareModal.svelte'
   import { track } from '../lib/analytics'
+  import { flags } from '../lib/featureFlags.svelte'
 
   let { viewingShared = false }: { viewingShared?: boolean } = $props()
 
@@ -218,6 +219,7 @@
   </section>
 
   <!-- Profile -->
+  {#if flags.collaborateMode}
   <section>
     <div class="flex items-center gap-2 mb-1">
       <Info size={14} class="text-zinc-400" />
@@ -241,6 +243,7 @@
       <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Used to identify your gear when collaborating</p>
     </div>
   </section>
+  {/if}
 
   <!-- Appearance -->
   <section>

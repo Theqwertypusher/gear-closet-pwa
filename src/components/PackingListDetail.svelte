@@ -21,7 +21,7 @@
   import { kitStore } from '../lib/stores/kitStore.svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { sessionStore } from '../lib/stores/sessionStore.svelte'
-  import { flags } from '../lib/featureFlags'
+  import { flags } from '../lib/featureFlags.svelte'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
