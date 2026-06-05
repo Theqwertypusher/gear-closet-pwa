@@ -2,7 +2,7 @@
   import { ChevronDown, ChevronUp, Smartphone } from '@lucide/svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { track } from '../lib/analytics'
-  import { flags } from '../lib/featureFlags.svelte'
+  import { adminStore } from '../lib/stores/adminStore.svelte'
   import { setGearStoreTutorialMode } from '../lib/stores/gearStore.svelte'
   import { setKitStoreTutorialMode } from '../lib/stores/kitStore.svelte'
   import { setPackingListStoreTutorialMode } from '../lib/stores/packingListStore.svelte'
@@ -57,7 +57,6 @@
   </div>
 
   <!-- Display name input -->
-  {#if flags.collaborateMode}
   <div class="w-full max-w-sm mb-6">
     <input
       type="text"
@@ -66,8 +65,10 @@
       class="w-full px-4 py-3 rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
     />
     <p class="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center">Used when collaborating with others.</p>
+    {#if adminStore.isAdmin}
+      <p class="text-xs text-green-500 mt-1 text-center">Admin mode active</p>
+    {/if}
   </div>
-  {/if}
 
   <!-- Option cards -->
   <div class="w-full max-w-sm space-y-3">

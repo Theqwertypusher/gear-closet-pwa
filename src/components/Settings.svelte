@@ -12,6 +12,7 @@
   import ShareModal from './ShareModal.svelte'
   import { track } from '../lib/analytics'
   import { flags } from '../lib/featureFlags.svelte'
+  import { adminStore } from '../lib/stores/adminStore.svelte'
 
   let { viewingShared = false }: { viewingShared?: boolean } = $props()
 
@@ -219,7 +220,6 @@
   </section>
 
   <!-- Profile -->
-  {#if flags.collaborateMode}
   <section>
     <div class="flex items-center gap-2 mb-1">
       <Info size={14} class="text-zinc-400" />
@@ -241,9 +241,11 @@
         class="w-full px-3 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-500"
       />
       <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Used to identify your gear when collaborating</p>
+      {#if adminStore.isAdmin}
+        <p class="text-xs text-green-500 mt-1">Admin mode active</p>
+      {/if}
     </div>
   </section>
-  {/if}
 
   <!-- Appearance -->
   <section>
@@ -549,6 +551,31 @@
     </button>
     <p class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Permanently deletes all gear, kits, and packing lists.</p>
   </section>
+
+
+  <!-- Feature Flags (admin only) -->
+  {#if adminStore.isAdmin}
+  <section class="px-0 pt-4 pb-2">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-3">Feature Flags</h2>
+    {#each Object.entries(adminStore.flagOverrides) as [key, value]}
+      <div class="flex items-center justify-between py-2 border-t border-zinc-100 dark:border-zinc-800">
+        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{key}</p>
+        <button
+          onclick={() => adminStore.toggleFlag(key)}
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+            {value ? 'bg-zinc-900 dark:bg-zinc-100' : 'bg-zinc-300 dark:bg-zinc-600'}"
+          role="switch"
+          aria-checked={value}
+        >
+          <span
+            class="inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-900 transition-transform shadow
+              {value ? 'translate-x-6' : 'translate-x-1'}"
+          ></span>
+        </button>
+      </div>
+    {/each}
+  </section>
+  {/if}
 
 </div>
 
