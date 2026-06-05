@@ -27,6 +27,7 @@
   } from './lib/stores/packingListStore.svelte'
   import { track } from './lib/analytics'
   import { flags } from './lib/featureFlags.svelte'
+  import { adminStore } from './lib/stores/adminStore.svelte'
 
   type Tab = 'gear' | 'kits' | 'packing-lists' | 'settings'
 
@@ -279,6 +280,18 @@
   $effect(() => {
     window.addEventListener('keydown', handleKeydown)
     return () => window.removeEventListener('keydown', handleKeydown)
+  })
+
+  // Sync display name to adminStore for admin detection
+  $effect(() => {
+    adminStore.setDisplayName(settingsStore.settings.displayName ?? '')
+  })
+
+  // Load feature flags via adminStore
+  $effect(() => {
+    if (settingsStore.loaded) {
+      adminStore.loadFlags()
+    }
   })
 
   // Initialize Vercel Analytics
