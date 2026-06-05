@@ -26,7 +26,7 @@
     setPackingListStoreTutorialMode,
   } from './lib/stores/packingListStore.svelte'
   import { track } from './lib/analytics'
-  import { flags } from './lib/featureFlags'
+  import { flags } from './lib/featureFlags.svelte'
 
   type Tab = 'gear' | 'kits' | 'packing-lists' | 'settings'
 

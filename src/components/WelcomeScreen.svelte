@@ -2,6 +2,7 @@
   import { ChevronDown, ChevronUp, Smartphone } from '@lucide/svelte'
   import { settingsStore } from '../lib/stores/settingsStore.svelte'
   import { track } from '../lib/analytics'
+  import { flags } from '../lib/featureFlags.svelte'
   import { setGearStoreTutorialMode } from '../lib/stores/gearStore.svelte'
   import { setKitStoreTutorialMode } from '../lib/stores/kitStore.svelte'
   import { setPackingListStoreTutorialMode } from '../lib/stores/packingListStore.svelte'
@@ -56,6 +57,7 @@
   </div>
 
   <!-- Display name input -->
+  {#if flags.collaborateMode}
   <div class="w-full max-w-sm mb-6">
     <input
       type="text"
@@ -65,6 +67,7 @@
     />
     <p class="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center">Used when collaborating with others.</p>
   </div>
+  {/if}
 
   <!-- Option cards -->
   <div class="w-full max-w-sm space-y-3">
