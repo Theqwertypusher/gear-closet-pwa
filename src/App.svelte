@@ -339,6 +339,9 @@
   })
 
   function onWelcomeDone() {
+    // activeTab outlives the Welcome screen (e.g. "Reset data" is triggered from
+    // Settings), so set the landing tab explicitly instead of inheriting it.
+    activeTab = settingsStore.settings.tutorialMode ? 'packing-lists' : 'gear'
     // If tutorial mode was just enabled show a toast
     if (settingsStore.settings.tutorialMode) {
       tutorialToast = true
