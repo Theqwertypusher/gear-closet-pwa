@@ -24,6 +24,7 @@
   import { flags } from '../lib/featureFlags.svelte'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
+  import WeightDistributionBar from './WeightDistributionBar.svelte'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
   import { PACKER_COLORS } from '../lib/types'
 
@@ -821,6 +822,13 @@
     <!-- FINAL VIEW — lighterpack-style condensed layout            -->
     <!-- ═══════════════════════════════════════════════════════════ -->
     <div class="px-4 pt-2 pb-8">
+      <!-- Weight & item distribution by category (final mode only) -->
+      <WeightDistributionBar
+        categories={localList.categories}
+        gearItems={gearItemsMap}
+        {unit}
+      />
+
       {#if localList.isPackingMode}
         <div class="my-3">
           <button
