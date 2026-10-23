@@ -15,7 +15,7 @@
     Copy,
     CheckCheck,
   } from '@lucide/svelte'
-  import { dndzone } from 'svelte-dnd-action'
+  import { dndzone, type DndEvent } from 'svelte-dnd-action'
   import { packingListStore } from '../lib/stores/packingListStore.svelte'
   import { gearStore } from '../lib/stores/gearStore.svelte'
   import { kitStore } from '../lib/stores/kitStore.svelte'
@@ -24,6 +24,7 @@
   import { flags } from '../lib/featureFlags.svelte'
   import { track } from '../lib/analytics'
   import { computePackingListWeights, computeItemsWeight, formatWeight, itemWeightIn } from '../lib/weightUtils'
+  import { dragPhase, collapsedWhileDragging, collapsedAfterDrag } from '../lib/dragLifecycle'
   import type { PackingList, PackingListCategory, PackingListItem, ListMode, Packer } from '../lib/types'
   import { PACKER_COLORS } from '../lib/types'
 
@@ -393,22 +394,54 @@
     }
   }
 
-  function handleCatConsider(e: CustomEvent<{ items: PackingListCategory[] }>) {
-    dragCategories = e.detail.items
+  // Holding a card collapses every category so the whole list is reachable in
+  // one screen while you place it; releasing expands them again (issue #26).
+  let dragActiveCategoryId: string | null = null
+
+  function startCategoryDrag(id: string) {
+    if (dragActiveCategoryId !== null) return
+    dragActiveCategoryId = id
+    collapsedCategories = collapsedWhileDragging(localList.categories.map((c) => c.id))
   }
 
-  function handleCatFinalize(e: CustomEvent<{ items: PackingListCategory[] }>) {
+  function endCategoryDrag() {
+    if (dragActiveCategoryId === null) return
+    dragActiveCategoryId = null
+    collapsedCategories = collapsedAfterDrag(reorderMode, localList.categories.map((c) => c.id))
+  }
+
+  function handleCatConsider(e: CustomEvent<DndEvent<PackingListCategory>>) {
+    dragCategories = e.detail.items
+    const phase = dragPhase('consider', e.detail.info)
+    if (phase === 'start') startCategoryDrag(e.detail.info.id)
+    else if (phase === 'end') endCategoryDrag()
+  }
+
+  function handleCatFinalize(e: CustomEvent<DndEvent<PackingListCategory>>) {
     const reordered = e.detail.items.map((c, i) => ({ ...c, sortOrder: i }))
     dragCategories = reordered
     localList.categories = reordered
     save()
+    if (dragPhase('finalize', e.detail.info) === 'end') endCategoryDrag()
   }
 
-  function transformDraggedElement(el: HTMLElement) {
-    el.style.outline = '2px solid #6366f1'
-    el.style.outlineOffset = '2px'
+  // Indigo ring on the held card. These are written as a literal class string so
+  // Tailwind's scanner picks them up, and applied as classes rather than inline
+  // styles so the dark: variant works. `outline` is not one of the properties
+  // svelte-dnd-action copies off the shadow element, so it survives the morph.
+  const HELD_CARD_RING = 'rounded-xl outline outline-2 outline-offset-2 outline-indigo-500 dark:outline-indigo-400'
+
+  function transformDraggedElement(el?: HTMLElement) {
+    if (!el) return
+    el.classList.add(...HELD_CARD_RING.split(' '))
     el.style.borderRadius = '12px'
+    // `opacity` *is* copied off the shadow element, which renders at 40%, so the
+    // floating card has to re-assert its own every time it is transformed.
     el.style.opacity = '0.95'
+    // The floating card is cloned from the expanded original. Hide its body so it
+    // matches the collapsed cards underneath it instead of towering over them.
+    const body = el.querySelector<HTMLElement>('[data-category-body]')
+    if (body) body.style.display = 'none'
   }
 
   // Quantity stepper
@@ -1062,7 +1095,7 @@
 
           <!-- Items -->
           {#if !collapsed}
-            <div class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+            <div data-category-body class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
               {#each cat.items as item (item.id)}
                 {@const gear = gearItemsMap.get(item.gearItemId)}
                 {#if !localList.isPackingMode || activePackerFilter === null || item.assigneeId === activePackerFilter}
