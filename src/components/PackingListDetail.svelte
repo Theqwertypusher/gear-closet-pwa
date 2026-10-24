@@ -1143,7 +1143,7 @@
                     <button
                       onclick={() => confirmDeleteItem(item.id)}
                       data-delete-item
-                      class="text-zinc-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 focus-visible:text-red-500 dark:focus-visible:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded transition-colors ml-1"
+                      class="w-6 h-6 flex items-center justify-center flex-shrink-0 text-zinc-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 focus-visible:text-red-500 dark:focus-visible:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded transition-colors ml-1"
                       aria-label="Remove item"
                     >
                       <Trash2 size={14} />
